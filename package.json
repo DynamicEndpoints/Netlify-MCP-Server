@@ -1,0 +1,24 @@
+{
+  "name": "netlify-server",
+  "version": "1.0.0",
+  "type": "module",
+  "bin": {
+    "netlify": "./build/index.js"
+  },
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "watch": "tsc -w"
+  },
+  "files": [
+    "build"
+  ],
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "latest",
+    "netlify-cli": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "typescript": "latest"
+  }
+}
