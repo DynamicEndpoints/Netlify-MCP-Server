@@ -2,6 +2,10 @@
 
 A Model Context Protocol server that provides comprehensive tools for working with Netlify through their CLI. This server enables deploying sites, managing deployments, handling environment variables, DNS settings, serverless functions, forms, plugins, and webhooks.
 
+<a href="https://glama.ai/mcp/servers/rmzusviqom">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/rmzusviqom/badge" alt="Netlify Server MCP server" />
+</a>
+
 ## Features
 
 - Deploy and manage sites
