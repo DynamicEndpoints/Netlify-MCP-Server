@@ -1,5 +1,7 @@
 # Netlify MCP Server
 
+[![smithery badge](https://smithery.ai/badge/@DynamicEndpoints/Netlify-MCP-Server)](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server)
+
 A Model Context Protocol server that provides comprehensive tools for working with Netlify through their CLI. This server enables deploying sites, managing deployments, handling environment variables, DNS settings, serverless functions, forms, plugins, and webhooks.
 
 <a href="https://glama.ai/mcp/servers/rmzusviqom">
@@ -19,6 +21,16 @@ A Model Context Protocol server that provides comprehensive tools for working wi
 - Type-safe parameter validation
 
 ## Installation
+
+### Installing via Smithery
+
+To install Netlify MCP Server for Claude Desktop automatically via [Smithery](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server):
+
+```bash
+npx -y @smithery/cli install @DynamicEndpoints/Netlify-MCP-Server --client claude
+```
+
+### Manual Installation
 
 1. Install dependencies:
 ```bash
