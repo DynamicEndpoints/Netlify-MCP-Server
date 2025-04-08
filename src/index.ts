@@ -1,434 +1,445 @@
 #!/usr/bin/env node
-import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+// Adding .js extension back to specific paths
+import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js"; 
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { ListToolsRequestSchema, CallToolRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { execSync } from "child_process";
+import { URL } from 'url'; // Needed for ResourceTemplate parsing
 
-// Create server instance
-const server = new Server(
-  {
-    name: "netlify-server",
-    version: "1.0.0",
-  },
-  {
-    capabilities: {
-      tools: {},
-    },
-  }
-);
+// Create server instance using McpServer
+const server = new McpServer({
+  name: "netlify-mcp-server", // Updated name slightly
+  version: "1.1.0", // Incremented version
+});
 
 // Helper function for executing Netlify CLI commands
-async function executeNetlifyCommand(command: string): Promise<string> {
+async function executeNetlifyCommand(command: string, siteId?: string): Promise<string> { // Added optional siteId
   try {
-    return execSync(command).toString();
+    // Ensure Netlify CLI is accessible, might need full path or PATH setup
+    console.error(`Executing: netlify ${command}`); // Log command execution
+
+    // Create environment object, copying current process env
+    const env = { ...process.env };
+    if (siteId) {
+      env['NETLIFY_SITE_ID'] = siteId; // Add NETLIFY_SITE_ID if provided
+      console.error(`Using NETLIFY_SITE_ID: ${siteId}`);
+    }
+
+    // Explicitly pass the potentially modified environment variables
+    const output = execSync(`netlify ${command}`, { encoding: 'utf8', env: env });
+    console.error(`Output: ${output.substring(0, 100)}...`); // Log truncated output
+    return output;
   } catch (error) {
+    console.error(`Error executing command: netlify ${command}`, error);
     if (error instanceof Error) {
-      throw new Error(`Netlify CLI error: ${error.message}`);
+      // Include stderr if available
+      const stderr = (error as any).stderr ? (error as any).stderr.toString() : '';
+      throw new Error(`Netlify CLI error: ${error.message}\n${stderr}`);
     }
     throw error;
   }
 }
 
-// Define Zod schemas for validation
+// Define Zod schemas for validation (keeping existing ones)
 const DeploySiteSchema = z.object({
-  path: z.string(),
-  prod: z.boolean().optional(),
-  message: z.string().optional(),
+  path: z.string().describe("Path to the site directory"),
+  prod: z.boolean().optional().describe("Deploy to production"),
+  message: z.string().optional().describe("Deploy message"),
 });
+
+const ListSitesSchema = z.object({}); // No args needed
 
 const SetEnvVarsSchema = z.object({
-  siteId: z.string(),
-  envVars: z.record(z.string()),
+  siteId: z.string().describe("Site ID or name"),
+  envVars: z.record(z.string()).describe("Environment variables to set (key-value pairs)"),
 });
 
-const GetDeployStatusSchema = z.object({
-  siteId: z.string(),
-  deployId: z.string().optional(),
-});
+// Removed GetDeployStatusSchema as `netlify deploys` command group is not available in CLI v19.1.5
 
-const AddDNSRecordSchema = z.object({
-  siteId: z.string(),
-  domain: z.string(),
-  type: z.enum(["A", "AAAA", "CNAME", "MX", "TXT", "NS"]),
-  value: z.string(),
-  ttl: z.number().optional(),
-});
+// Removed AddDNSRecordSchema as `netlify dns` command group is not available in CLI v19.1.5
 
 const DeployFunctionSchema = z.object({
-  path: z.string(),
-  name: z.string(),
-  runtime: z.string().optional(),
+  // Netlify CLI deploys functions based on project structure, not individual files usually.
+  // This tool might need rethinking based on typical `netlify deploy` usage.
+  // Keeping schema for now, but implementation might need adjustment.
+  path: z.string().describe("Path to the site directory containing functions"),
+  name: z.string().describe("Function name (often inferred from file path)"),
+  runtime: z.string().optional().describe("Function runtime (e.g., nodejs, go)"),
 });
 
-const ManageFormSchema = z.object({
-  siteId: z.string(),
-  formId: z.string(),
-  action: z.enum(["enable", "disable", "delete"]),
+// Removed ManageFormSchema as `netlify forms` command group is not available in CLI v19.1.5
+
+// Removed ManagePluginSchema as `netlify plugins` command group is not available in CLI v19.1.5
+
+// Removed ManageHookSchema as `netlify hooks` command group is not available in CLI v19.1.5
+
+// Schemas for New Tools
+const GetLogsSchema = z.object({
+  siteId: z.string().describe("Site ID or name"),
+  function: z.string().optional().describe("Optional: Specific function name to filter logs"),
+  // Add other potential filters like 'level', 'tail', 'number' if needed
 });
 
-const ManagePluginSchema = z.object({
-  siteId: z.string(),
-  pluginId: z.string(),
-  action: z.enum(["install", "uninstall", "update"]),
-  config: z.record(z.unknown()).optional(),
+// Removed InvokeFunctionSchema as `functions:invoke` does not support --site flag in CLI v19.1.5
+
+// Removed DeleteFunctionSchema as `functions:delete` command is not available in CLI v19.1.5
+
+const TriggerBuildSchema = z.object({
+  siteId: z.string().describe("Site ID or name"),
+  message: z.string().optional().describe("Optional: Deploy message"),
+  // Add --clear-cache if needed
 });
 
-const ManageHookSchema = z.object({
-  siteId: z.string(),
-  event: z.string(),
-  url: z.string(),
-  action: z.enum(["create", "delete", "update"]),
+const LinkSiteSchema = z.object({
+  siteId: z.string().optional().describe("Optional: Site ID to link to (otherwise interactive)"),
+  // Add --name for repo linking if needed
 });
 
-type DeploySiteParams = z.infer<typeof DeploySiteSchema>;
-type SetEnvVarsParams = z.infer<typeof SetEnvVarsSchema>;
-type GetDeployStatusParams = z.infer<typeof GetDeployStatusSchema>;
-type AddDNSRecordParams = z.infer<typeof AddDNSRecordSchema>;
-type DeployFunctionParams = z.infer<typeof DeployFunctionSchema>;
-type ManageFormParams = z.infer<typeof ManageFormSchema>;
-type ManagePluginParams = z.infer<typeof ManagePluginSchema>;
-type ManageHookParams = z.infer<typeof ManageHookSchema>;
+const UnlinkSiteSchema = z.object({}); // No args needed
 
-// Register Netlify tools
-server.setRequestHandler(ListToolsRequestSchema, async () => ({
-  tools: [
-    {
-      name: "deploy-site",
-      description: "Deploy a site to Netlify",
-      inputSchema: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Path to the site directory",
-          },
-          prod: {
-            type: "boolean",
-            description: "Deploy to production",
-          },
-          message: {
-            type: "string",
-            description: "Deploy message",
-          },
-        },
-        required: ["path"],
-      },
-    },
-    {
-      name: "list-sites",
-      description: "List all Netlify sites",
-      inputSchema: {
-        type: "object",
-        properties: {},
-        required: [],
-      },
-    },
-    {
-      name: "set-env-vars",
-      description: "Set environment variables for a site",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          envVars: {
-            type: "object",
-            description: "Environment variables to set",
-            additionalProperties: {
-              type: "string",
-            },
-          },
-        },
-        required: ["siteId", "envVars"],
-      },
-    },
-    {
-      name: "get-deploy-status",
-      description: "Get deployment status for a site",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          deployId: {
-            type: "string",
-            description: "Deployment ID",
-          },
-        },
-        required: ["siteId"],
-      },
-    },
-    {
-      name: "add-dns-record",
-      description: "Add a DNS record to a site",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          domain: {
-            type: "string",
-            description: "Domain name",
-          },
-          type: {
-            type: "string",
-            enum: ["A", "AAAA", "CNAME", "MX", "TXT", "NS"],
-            description: "DNS record type",
-          },
-          value: {
-            type: "string",
-            description: "DNS record value",
-          },
-          ttl: {
-            type: "number",
-            description: "Time to live in seconds",
-          },
-        },
-        required: ["siteId", "domain", "type", "value"],
-      },
-    },
-    {
-      name: "deploy-function",
-      description: "Deploy a serverless function",
-      inputSchema: {
-        type: "object",
-        properties: {
-          path: {
-            type: "string",
-            description: "Path to the function file",
-          },
-          name: {
-            type: "string",
-            description: "Function name",
-          },
-          runtime: {
-            type: "string",
-            description: "Function runtime (e.g., nodejs, go)",
-          },
-        },
-        required: ["path", "name"],
-      },
-    },
-    {
-      name: "manage-form",
-      description: "Manage form submissions",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          formId: {
-            type: "string",
-            description: "Form ID",
-          },
-          action: {
-            type: "string",
-            enum: ["enable", "disable", "delete"],
-            description: "Action to perform",
-          },
-        },
-        required: ["siteId", "formId", "action"],
-      },
-    },
-    {
-      name: "manage-plugin",
-      description: "Manage site plugins",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          pluginId: {
-            type: "string",
-            description: "Plugin ID",
-          },
-          action: {
-            type: "string",
-            enum: ["install", "uninstall", "update"],
-            description: "Action to perform",
-          },
-          config: {
-            type: "object",
-            description: "Plugin configuration",
-          },
-        },
-        required: ["siteId", "pluginId", "action"],
-      },
-    },
-    {
-      name: "manage-hook",
-      description: "Manage webhook notifications",
-      inputSchema: {
-        type: "object",
-        properties: {
-          siteId: {
-            type: "string",
-            description: "Site ID or name",
-          },
-          event: {
-            type: "string",
-            description: "Event type",
-          },
-          url: {
-            type: "string",
-            description: "Webhook URL",
-          },
-          action: {
-            type: "string",
-            enum: ["create", "delete", "update"],
-            description: "Action to perform",
-          },
-        },
-        required: ["siteId", "event", "url", "action"],
-      },
-    },
-  ],
-}));
+const GetStatusSchema = z.object({}); // No args needed
 
-server.setRequestHandler(CallToolRequestSchema, async (request) => {
+const ImportEnvSchema = z.object({
+  siteId: z.string().describe("Site ID or name"),
+  filePath: z.string().describe("Path to the .env file to import"),
+  replace: z.boolean().optional().describe("Replace existing variables instead of merging"),
+});
+
+// Schemas for Comprehensive Tools
+const BuildSiteSchema = z.object({
+  siteId: z.string().optional().describe("Optional: Site ID (if not linked)"),
+  context: z.string().optional().describe("Optional: Build context (e.g., 'production', 'deploy-preview')"),
+  dry: z.boolean().optional().describe("Optional: Run a dry build without executing commands"),
+});
+
+const GetEnvVarSchema = z.object({
+  siteId: z.string().optional().describe("Optional: Site ID (if not linked)"),
+  key: z.string().describe("The environment variable key to retrieve"),
+  context: z.string().optional().describe("Optional: Specific context to get the value from"),
+  scope: z.string().optional().describe("Optional: Specific scope (e.g., 'builds', 'functions')"),
+});
+
+const UnsetEnvVarSchema = z.object({
+  siteId: z.string().optional().describe("Optional: Site ID (if not linked)"),
+  key: z.string().describe("The environment variable key to unset"),
+  context: z.string().optional().describe("Optional: Specific context to unset the value from (otherwise all)"),
+  // Scope might not be applicable for unset, check CLI docs
+});
+
+const CloneEnvVarsSchema = z.object({
+  fromSiteId: z.string().describe("Source Site ID"),
+  toSiteId: z.string().describe("Destination Site ID"),
+});
+
+const CreateSiteSchema = z.object({
+  name: z.string().optional().describe("Optional: Site name (subdomain)"),
+  accountSlug: z.string().optional().describe("Optional: Account slug for the team"),
+  // Add other flags like --repo, --manual if needed for non-interactive creation
+});
+
+const DeleteSiteSchema = z.object({
+  siteId: z.string().describe("Site ID to delete"),
+  force: z.boolean().optional().default(true).describe("Force deletion without confirmation (default: true)"),
+});
+
+// Removed DeleteDNSRecordSchema as `netlify dns` command group is not available in CLI v19.1.5
+
+
+// --- Register Netlify Tools using server.tool() ---
+
+server.tool("deploy-site", DeploySiteSchema.shape, async (params: z.infer<typeof DeploySiteSchema>) => { // Use .shape
   try {
-    switch (request.params.name) {
-      case "deploy-site": {
-        const params = DeploySiteSchema.parse(request.params.arguments);
-        let command = `netlify deploy --dir="${params.path}"`;
-        if (params.prod) {
-          command += " --prod";
-        }
-        if (params.message) {
-          command += ` --message="${params.message}"`;
-        }
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "list-sites": {
-        const output = await executeNetlifyCommand("netlify sites:list");
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "set-env-vars": {
-        const params = SetEnvVarsSchema.parse(request.params.arguments);
-        const results: string[] = [];
-        for (const [key, value] of Object.entries(params.envVars)) {
-          const output = await executeNetlifyCommand(
-            `netlify env:set ${key} "${value}" --site-id ${params.siteId}`
-          );
-          results.push(output);
-        }
-
-        return {
-          content: [{ type: "text", text: results.join("\n") }],
-        };
-      }
-
-      case "get-deploy-status": {
-        const params = GetDeployStatusSchema.parse(request.params.arguments);
-        let command = `netlify deploy:list --site-id ${params.siteId}`;
-        if (params.deployId) {
-          command += ` --id ${params.deployId}`;
-        }
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "add-dns-record": {
-        const params = AddDNSRecordSchema.parse(request.params.arguments);
-        let command = `netlify dns:add ${params.domain} ${params.type} ${params.value}`;
-        if (params.ttl) {
-          command += ` --ttl ${params.ttl}`;
-        }
-        command += ` --site-id ${params.siteId}`;
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "deploy-function": {
-        const params = DeployFunctionSchema.parse(request.params.arguments);
-        let command = `netlify functions:create ${params.name} --path ${params.path}`;
-        if (params.runtime) {
-          command += ` --runtime ${params.runtime}`;
-        }
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "manage-form": {
-        const params = ManageFormSchema.parse(request.params.arguments);
-        const command = `netlify forms:${params.action} ${params.formId} --site-id ${params.siteId}`;
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "manage-plugin": {
-        const params = ManagePluginSchema.parse(request.params.arguments);
-        let command = `netlify plugins:${params.action} ${params.pluginId} --site-id ${params.siteId}`;
-        if (params.config && params.action !== "uninstall") {
-          command += ` --config '${JSON.stringify(params.config)}'`;
-        }
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      case "manage-hook": {
-        const params = ManageHookSchema.parse(request.params.arguments);
-        const command = `netlify hooks:${params.action} --site-id ${params.siteId} --event ${params.event} --url ${params.url}`;
-
-        const output = await executeNetlifyCommand(command);
-        return {
-          content: [{ type: "text", text: output }],
-        };
-      }
-
-      default:
-        throw new Error(`Unknown tool: ${request.params.name}`);
-    }
-  } catch (error) {
-    return {
-      content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error occurred" }],
-      isError: true,
-    };
+    let command = `deploy --dir="${params.path}"`;
+    if (params.prod) command += " --prod";
+    if (params.message) command += ` --message="${params.message}"`;
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
   }
 });
 
-// Run the server
+server.tool("list-sites", ListSitesSchema.shape, async () => { // Use .shape
+  try {
+    const output = await executeNetlifyCommand("sites:list");
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("set-env-vars", SetEnvVarsSchema.shape, async (params: z.infer<typeof SetEnvVarsSchema>) => { // Use .shape
+  try {
+    const results: string[] = [];
+    // Note: `netlify env:set` sets one var at a time.
+    // Consider `netlify env:import` for bulk setting from a file if needed.
+    for (const [key, value] of Object.entries(params.envVars)) {
+      // Value is a positional argument. Pass siteId via env var.
+      const command = `env:set ${key} "${value}"`;
+      const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+      results.push(`Set ${key}: ${output}`);
+    }
+    return { content: [{ type: "text", text: results.join("\n") }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+// Removed get-deploy-status tool
+
+// Removed add-dns-record tool
+
+// Deploying individual functions via CLI isn't standard. Usually `netlify deploy` handles it.
+// This tool might need removal or significant rework based on actual workflow.
+// server.tool("deploy-function", DeployFunctionSchema.shape, async (params: z.infer<typeof DeployFunctionSchema>) => { ... }); // Use .shape if uncommented
+
+// Removed manage-form tool
+
+// Removed manage-plugin tool
+
+// Removed manage-hook tool
+
+// New Tools Implementation
+server.tool("get-logs", GetLogsSchema.shape, async (params: z.infer<typeof GetLogsSchema>) => {
+  try {
+    let command = `logs:function`; // Use logs:function subcommand
+    if (params.function) command += ` ${params.function}`; // Function name is an argument now
+    // Site context passed via env var
+    // Add other flags like --level, --number based on schema extensions if applicable to logs:function
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+// Removed invoke-function tool
+
+// Removed delete-function tool
+
+server.tool("trigger-build", TriggerBuildSchema.shape, async (params: z.infer<typeof TriggerBuildSchema>) => {
+  try {
+    let command = `deploy --build`;
+    if (params.message) command += ` --message "${params.message}"`;
+    // Site context passed via env var
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("link-site", LinkSiteSchema.shape, async (params: z.infer<typeof LinkSiteSchema>) => {
+  try {
+    // `netlify link` is typically interactive. Providing ID might bypass this.
+    let command = `link`;
+    if (params.siteId) command += ` --id ${params.siteId}`;
+    else {
+        // Cannot run interactive commands via MCP server
+        throw new Error("Interactive linking not supported. Please provide a siteId.");
+    }
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("unlink-site", UnlinkSiteSchema.shape, async () => { // Use .shape
+  try {
+    const command = `unlink`;
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("get-status", GetStatusSchema.shape, async () => { // Use .shape
+  try {
+    const command = `status`;
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("import-env", ImportEnvSchema.shape, async (params: z.infer<typeof ImportEnvSchema>) => { // Use .shape
+  try {
+    let command = `env:import ${params.filePath}`;
+    if (params.replace) command += ` --replace`;
+    // Site context passed via env var
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+// Comprehensive Tools Implementation
+server.tool("build-site", BuildSiteSchema.shape, async (params: z.infer<typeof BuildSiteSchema>) => {
+  try {
+    let command = `build`;
+    if (params.context) command += ` --context ${params.context}`;
+    if (params.dry) command += ` --dry`;
+    // Site context passed via env var if provided
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("get-env-var", GetEnvVarSchema.shape, async (params: z.infer<typeof GetEnvVarSchema>) => {
+  try {
+    let command = `env:get ${params.key}`;
+    if (params.context) command += ` --context ${params.context}`;
+    if (params.scope) command += ` --scope ${params.scope}`;
+    // Site context passed via env var if provided
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("unset-env-var", UnsetEnvVarSchema.shape, async (params: z.infer<typeof UnsetEnvVarSchema>) => {
+  try {
+    let command = `env:unset ${params.key}`;
+    if (params.context) command += ` --context ${params.context}`;
+    // Site context passed via env var if provided
+    // Unset usually applies to all scopes implicitly
+    const output = await executeNetlifyCommand(command, params.siteId); // Pass siteId here
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("clone-env-vars", CloneEnvVarsSchema.shape, async (params: z.infer<typeof CloneEnvVarsSchema>) => {
+  try {
+    const command = `env:clone --to ${params.toSiteId} --from ${params.fromSiteId}`;
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("create-site", CreateSiteSchema.shape, async (params: z.infer<typeof CreateSiteSchema>) => {
+  try {
+    // `sites:create` can be interactive. Need flags for non-interactive use.
+    // Using the confirmed team slug to make it non-interactive.
+    const accountSlug = params.accountSlug || "playhousehosting"; // Use provided or default to confirmed slug
+    let command = `sites:create --account-slug ${accountSlug}`; 
+    if (params.name) command += ` --name "${params.name}"`;
+    // Add --disable-linking or other flags if needed to prevent interactive prompts
+    command += ` --disable-linking`; // Assume non-interactive needed
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+server.tool("delete-site", DeleteSiteSchema.shape, async (params: z.infer<typeof DeleteSiteSchema>) => {
+  try {
+    let command = `sites:delete ${params.siteId}`;
+    if (params.force) command += ` --force`;
+    const output = await executeNetlifyCommand(command);
+    return { content: [{ type: "text", text: output }] };
+  } catch (error: unknown) {
+    return { content: [{ type: "text", text: error instanceof Error ? error.message : "Unknown error" }], isError: true };
+  }
+});
+
+// Removed delete-dns-record tool
+
+
+// --- Register Netlify Resources using server.resource() ---
+
+// List Sites Resource
+server.resource(
+  "list-sites",
+  "netlify://sites",
+  async (uri: URL) => {
+    try {
+      const output = await executeNetlifyCommand("sites:list --json"); // Request JSON output
+      return { contents: [{ uri: uri.href, mimeType: 'application/json', text: output }] };
+    } catch (error: unknown) {
+      // Handle errors appropriately for resource loading
+      return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: `Error loading sites: ${error instanceof Error ? error.message : 'Unknown error'}` }] };
+    }
+  }
+);
+
+// Removed site-details resource as `sites:get` command is not available in CLI v19.1.5
+
+// Removed list-deploys resource
+
+// Removed deploy-details resource
+
+
+// List Functions Resource
+server.resource(
+  "list-functions",
+  new ResourceTemplate("netlify://sites/{siteId}/functions", { list: undefined }),
+  async (uri: URL, params: Record<string, string | string[]>) => { // Updated params type
+    try {
+      const siteId = Array.isArray(params.siteId) ? params.siteId[0] : params.siteId;
+      const command = `functions:list --json`; // Removed --site flag
+      const output = await executeNetlifyCommand(command, siteId); // Pass siteId here
+      return { contents: [{ uri: uri.href, mimeType: 'application/json', text: output }] };
+    } catch (error: unknown) {
+      const siteId = Array.isArray(params.siteId) ? params.siteId[0] : params.siteId;
+      return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: `Error loading functions for site ${siteId}: ${error instanceof Error ? error.message : 'Unknown error'}` }] };
+    }
+  }
+);
+
+// List Environment Variables Resource
+server.resource(
+  "list-env-vars",
+  new ResourceTemplate("netlify://sites/{siteId}/env", { list: undefined }),
+  async (uri: URL, params: Record<string, string | string[]>) => { // Updated params type
+    try {
+      // Requesting JSON might simplify parsing if available
+      const siteId = Array.isArray(params.siteId) ? params.siteId[0] : params.siteId;
+      const command = `env:list --json`; // Removed --site flag
+      const output = await executeNetlifyCommand(command, siteId); // Pass siteId here
+      return { contents: [{ uri: uri.href, mimeType: 'application/json', text: output }] };
+    } catch (error: unknown) {
+      const siteId = Array.isArray(params.siteId) ? params.siteId[0] : params.siteId;
+      return { contents: [{ uri: uri.href, mimeType: 'text/plain', text: `Error loading env vars for site ${siteId}: ${error instanceof Error ? error.message : 'Unknown error'}` }] };
+    }
+  }
+);
+
+// Removed list-dns-zones resource
+
+// Removed list-dns-records resource
+
+
+// --- Run the server ---
 async function main() {
   const transport = new StdioServerTransport();
+  // Add error handling for server connection
+  // server.onerror = (error: Error) => { // Removed as property doesn't exist
+  //     console.error("[MCP Server Error]", error);
+  // };
   await server.connect(transport);
-  console.error("Netlify MCP Server running on stdio");
+  console.error("Netlify MCP Server (v1.1.0) running on stdio"); // Updated log message
 }
 
+// Graceful shutdown
+process.on('SIGINT', async () => {
+    console.error("Shutting down Netlify MCP Server...");
+    await server.close();
+    process.exit(0);
+});
+
 main().catch((error) => {
-  console.error("Fatal error in main():", error);
+  console.error("Fatal error initializing Netlify MCP Server:", error);
   process.exit(1);
 });
