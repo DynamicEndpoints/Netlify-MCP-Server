@@ -2,24 +2,26 @@
 
 [![smithery badge](https://smithery.ai/badge/@DynamicEndpoints/Netlify-MCP-Server)](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server)
 
-A Model Context Protocol (MCP) server that provides comprehensive tools and resources for interacting with Netlify through their CLI. This server enables deploying sites, managing deployments, handling environment variables, DNS settings, serverless functions, forms, plugins, webhooks, builds, and more.
+A Model Context Protocol (MCP) server that provides tools and resources for interacting with Netlify through their CLI. This server enables deploying sites, managing environment variables, builds, and more, compatible with Netlify CLI v19.1.5.
 
 <a href="https://glama.ai/mcp/servers/rmzusviqom">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/rmzusviqom/badge" alt="Netlify Server MCP server" />
 </a>
 
-## Features
+## Recent Changes (April 8, 2025)
 
-- Deploy and manage sites (deploy, build, trigger build, link, unlink, status, create, delete)
-- Manage environment variables (set, get, unset, import, clone)
-- Configure DNS settings (add record, delete record)
-- Manage serverless functions (invoke, delete, get logs)
-- Manage forms (list, submissions, delete)
-- Manage webhooks (create, list, show, update, delete)
-- List plugins
-- Access site data via Resources (sites, deploys, functions, env vars, DNS zones/records)
-- Comprehensive error handling
-- Type-safe parameter validation using Zod
+*   **Compatibility Update:** Verified tool compatibility with Netlify CLI v19.1.5.
+*   **Removed Unsupported Tools/Resources:** Removed functionality related to unavailable CLI command groups: `dns`, `forms`, `plugins`, `hooks`, `deploys`. Specific commands like `functions:delete`, `functions:invoke`, and `sites:get` were also removed as they were either unavailable or incompatible with non-interactive use via the MCP server.
+*   **Site Context Workaround:** Updated tools requiring site context (like `env:*`, `logs:function`, `build`, `trigger-build`) to pass the `siteId` via the `NETLIFY_SITE_ID` environment variable, as the `--site` flag is not supported for these commands in this CLI version.
+
+## Features (Compatible with Netlify CLI v19.1.5)
+
+*   Deploy and manage sites (`deploy-site`, `build-site`, `trigger-build`, `link-site`, `unlink-site`, `get-status`, `create-site`, `delete-site`)
+*   Manage environment variables (`set-env-vars`, `get-env-var`, `unset-env-var`, `import-env`, `clone-env-vars`)
+*   Get function logs (`get-logs`)
+*   Access site data via Resources (`list-sites`, `list-functions`, `list-env-vars`)
+*   Comprehensive error handling
+*   Type-safe parameter validation using Zod
 
 ## Installation
 
@@ -42,10 +44,10 @@ npx -y @smithery/cli install @DynamicEndpoints/Netlify-MCP-Server --client claud
     ```bash
     npm run build
     ```
-4.  Ensure Netlify CLI is installed (globally or locally):
+4.  Ensure Netlify CLI is installed (v19.1.5 or compatible):
     ```bash
     # Example global install:
-    npm install -g netlify-cli
+    npm install -g netlify-cli@19.1.5
     ```
 
 ## Authentication
@@ -90,7 +92,7 @@ Add the following configuration to your MCP settings file (location varies by pl
 - Cline Dev Extension (VS Code): `/home/user/.codeoss-cloudworkstations/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (or similar based on OS/setup)
 - *Consult your specific MCP client documentation for other potential locations.*
 
-## Available Tools
+## Available Tools (Netlify CLI v19.1.5 Compatible)
 
 *(Parameters are based on the Zod schemas defined in `src/index.ts`)*
 
@@ -105,33 +107,43 @@ Deploy a site directory to Netlify.
   "message": "string?"     // Optional: Deploy message
 }
 ```
+*Example:*
+```json
+{
+  "path": "./dist",
+  "prod": true,
+  "message": "Deploying latest changes"
+}
+```
 
 #### list-sites
 List all Netlify sites linked to your account.
 ```json
 {} // No parameters
 ```
-
-#### get-deploy-status
-Get deployment status list for a site. Can optionally filter by deploy ID (basic grep).
+*Example:*
 ```json
-{
-  "siteId": "string",     // Required: Site ID or name
-  "deployId": "string?"   // Optional: Specific deployment ID to filter for
-}
+{}
 ```
 
 #### trigger-build
-Trigger a new build/deploy for a site.
+Trigger a new build/deploy for a site. Site context is passed via `NETLIFY_SITE_ID` env var.
 ```json
 {
   "siteId": "string",     // Required: Site ID or name
   "message": "string?"    // Optional: Deploy message
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "message": "Triggering rebuild"
+}
+```
 
 #### build-site
-Run a Netlify build locally (mimics Netlify build environment).
+Run a Netlify build locally (mimics Netlify build environment). Site context is passed via `NETLIFY_SITE_ID` env var if `siteId` is provided.
 ```json
 {
   "siteId": "string?",    // Optional: Site ID (if project dir not linked)
@@ -139,12 +151,25 @@ Run a Netlify build locally (mimics Netlify build environment).
   "dry": "boolean?"       // Optional: Run a dry build (list steps without executing)
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "context": "production"
+}
+```
 
 #### link-site
 Link the current project directory to a Netlify site (requires Site ID for non-interactive use).
 ```json
 {
-  "siteId": "string?"     // Optional: Site ID to link to. **Required** for this tool as interactive linking is not supported.
+  "siteId": "string"     // Required: Site ID to link to.
+}
+```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here"
 }
 ```
 
@@ -153,11 +178,19 @@ Unlink the current project directory from the associated Netlify site.
 ```json
 {} // No parameters
 ```
+*Example:*
+```json
+{}
+```
 
 #### get-status
-Show the Netlify status for the linked site/directory.
+Show the Netlify status for the linked site/directory. (Will likely fail if run via MCP server unless the server directory itself is linked).
 ```json
 {} // No parameters
+```
+*Example:*
+```json
+{}
 ```
 
 #### create-site
@@ -165,7 +198,13 @@ Create a new site on Netlify (non-interactively).
 ```json
 {
   "name": "string?",        // Optional: Site name (subdomain)
-  "accountSlug": "string?"  // Optional: Account slug for the team
+  "accountSlug": "string?"  // Optional: Account slug for the team (defaults to 'playhousehosting' if omitted)
+}
+```
+*Example:*
+```json
+{
+  "name": "my-awesome-new-site"
 }
 ```
 
@@ -177,11 +216,18 @@ Delete a site from Netlify.
   "force": "boolean?"     // Optional: Force deletion without confirmation (default: true)
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "site-id-to-delete",
+  "force": true
+}
+```
 
 ### Environment Variable Management
 
 #### set-env-vars
-Set one or more environment variables for a site.
+Set one or more environment variables for a site. Site context is passed via `NETLIFY_SITE_ID` env var.
 ```json
 {
   "siteId": "string",     // Required: Site ID or name
@@ -190,9 +236,19 @@ Set one or more environment variables for a site.
   }
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "envVars": {
+    "API_KEY": "secret123",
+    "NODE_ENV": "production"
+  }
+}
+```
 
 #### get-env-var
-Get the value of a specific environment variable.
+Get the value of a specific environment variable. Site context is passed via `NETLIFY_SITE_ID` env var if `siteId` is provided.
 ```json
 {
   "siteId": "string?",    // Optional: Site ID (if not linked)
@@ -201,9 +257,16 @@ Get the value of a specific environment variable.
   "scope": "string?"      // Optional: Specific scope (e.g., 'builds', 'functions')
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "key": "API_KEY"
+}
+```
 
 #### unset-env-var
-Unset (delete) an environment variable.
+Unset (delete) an environment variable. Site context is passed via `NETLIFY_SITE_ID` env var if `siteId` is provided.
 ```json
 {
   "siteId": "string?",    // Optional: Site ID (if not linked)
@@ -211,9 +274,16 @@ Unset (delete) an environment variable.
   "context": "string?"    // Optional: Specific context to unset from (otherwise all)
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "key": "OLD_VAR"
+}
+```
 
 #### import-env
-Import environment variables from a `.env` file.
+Import environment variables from a `.env` file. Site context is passed via `NETLIFY_SITE_ID` env var.
 ```json
 {
   "siteId": "string",     // Required: Site ID or name
@@ -221,126 +291,62 @@ Import environment variables from a `.env` file.
   "replace": "boolean?"   // Optional: Replace existing variables instead of merging
 }
 ```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "filePath": ".env.production",
+  "replace": true
+}
+```
 
 #### clone-env-vars
-Clone environment variables from one site to another.
+Clone environment variables from one site to another. Requires source site to be linked or specified via `NETLIFY_SITE_ID`.
 ```json
 {
   "fromSiteId": "string", // Required: Source Site ID
   "toSiteId": "string"    // Required: Destination Site ID
 }
 ```
-
-### DNS Management
-
-#### add-dns-record
-Add a DNS record to a specific DNS Zone.
+*Example:*
 ```json
 {
-  "zoneId": "string",         // Required: DNS Zone ID (from `netlify dns:list`)
-  "type": "string",         // Required: Record type (A, AAAA, CNAME, MX, TXT, NS)
-  "name": "string",         // Required: Record name (e.g., 'www', '@')
-  "value": "string",        // Required: Record value
-  "ttl": "number?"          // Optional: Time to live in seconds
-}
-```
-
-#### delete-dns-record
-Delete a specific DNS record from a zone.
-```json
-{
-  "zoneId": "string",         // Required: DNS Zone ID
-  "recordId": "string",       // Required: DNS Record ID
-  "force": "boolean?"         // Optional: Force deletion without confirmation (default: true)
+  "fromSiteId": "source-site-id",
+  "toSiteId": "destination-site-id"
 }
 ```
 
 ### Serverless Functions
 
 #### get-logs
-View function logs (requires site context).
+View function logs. Site context is passed via `NETLIFY_SITE_ID` env var.
 ```json
 {
   "siteId": "string",     // Required: Site ID or name
   "function": "string?"   // Optional: Specific function name to filter logs
 }
 ```
-
-#### invoke-function
-Invoke a deployed serverless function.
+*Example:*
 ```json
 {
-  "siteId": "string",     // Required: Site ID or name
-  "name": "string",       // Required: Function name to invoke
-  "payload": "string?"    // Optional: JSON payload string or path to JSON file
+  "siteId": "your-site-id-here",
+  "function": "my-serverless-func"
 }
 ```
 
-#### delete-function
-Delete a deployed serverless function.
-```json
-{
-  "siteId": "string",     // Required: Site ID or name
-  "name": "string"        // Required: Function name to delete
-}
-```
-
-### Form Management
-
-#### manage-form
-Manage Netlify forms (list, get submissions, delete).
-```json
-{
-  "siteId": "string",     // Required: Site ID or name
-  "formId": "string",     // Required: Form ID or name
-  "action": "string"      // Required: Action ('list', 'submissions', 'delete')
-}
-```
-
-### Plugin Management
-
-#### manage-plugin
-List installed plugins for a site. (Add/delete typically requires `netlify.toml` changes).
-```json
-{
-  "siteId": "string",     // Required: Site ID or name
-  "pluginId": "string",   // Required: Plugin package name (used for filtering, but action is list only)
-  "action": "list"        // Required: Must be 'list' for this tool
-}
-```
-
-### Webhook Management
-
-#### manage-hook
-Manage webhook notifications (create, list, show, update, delete).
-```json
-{
-  "siteId": "string",     // Required: Site ID or name
-  "hookId": "string?",    // Optional: Hook ID (required for show/update/delete)
-  "action": "string",     // Required: Action ('create', 'list', 'show', 'update', 'delete')
-  "type": "string?",      // Optional: Hook type (required for create)
-  "event": "string?"      // Optional: Event type (required for create)
-}
-```
-
-## Available Resources
+## Available Resources (Netlify CLI v19.1.5 Compatible)
 
 Access Netlify data directly using these resource URIs:
 
 *   `netlify://sites`: List all sites (JSON output of `sites:list --json`)
-*   `netlify://sites/{siteId}`: Get details for a specific site (JSON output of `sites:get --id {siteId} --json` - *Note: `sites:get` command might be hypothetical*)
-*   `netlify://sites/{siteId}/deploys`: List deploys for a site (JSON output of `deploys:list --site {siteId} --json`)
-*   `netlify://sites/{siteId}/deploys/{deployId}`: Get details for a specific deploy (JSON output of `deploys:get {deployId} --json` - *Note: `deploys:get` command might be hypothetical*)
-*   `netlify://sites/{siteId}/functions`: List functions for a site (JSON output of `functions:list --site {siteId} --json`)
-*   `netlify://sites/{siteId}/env`: List environment variables for a site (JSON output of `env:list --site {siteId} --json`)
-*   `netlify://dns_zones`: List all DNS zones (JSON output of `dns:list --json`)
-*   `netlify://dns_zones/{zoneId}/records`: List DNS records for a specific zone (JSON output of `dns:records:list {zoneId} --json`)
+*   `netlify://sites/{siteId}/functions`: List functions for a site (JSON output of `functions:list --json`, requires `NETLIFY_SITE_ID={siteId}` env var)
+*   `netlify://sites/{siteId}/env`: List environment variables for a site (JSON output of `env:list --json`, requires `NETLIFY_SITE_ID={siteId}` env var)
 
-## Limitations
+## Limitations (Netlify CLI v19.1.5)
 
 -   **Interactive Commands:** Commands requiring interactive prompts (like `netlify login`, `netlify init`, `netlify dev`) are not supported by this server. Use a Personal Access Token for authentication.
--   **Plugin Management:** Adding/deleting plugins often involves modifying `netlify.toml` and `package.json`, which is beyond the scope of the simple `manage-plugin` tool (which currently only lists plugins).
--   **Hypothetical Commands:** Some resource implementations rely on hypothetical CLI commands (like `sites:get`, `deploys:get`) returning JSON. If these commands don't exist or don't support `--json`, the corresponding resources might return errors or raw text.
+-   **Site Context:** Many commands (`env:*`, `logs:function`, `build`, `trigger-build`, `functions:list`) require site context. This server passes the required `siteId` via the `NETLIFY_SITE_ID` environment variable when executing these commands. Commands like `status` and `unlink` operate on the *current working directory* of the server, which is typically not linked, and thus may not function as expected when called via the MCP server.
+-   **Unsupported Commands:** Functionality related to DNS, Forms, Plugins, Hooks, and Deploys (listing specific deploys, getting deploy status) has been removed due to incompatibility with CLI v19.1.5.
 
 ## Development
 
