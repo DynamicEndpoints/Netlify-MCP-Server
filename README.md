@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dynamicendpoints-netlify-mcp-server-badge.png)](https://mseep.ai/app/dynamicendpoints-netlify-mcp-server)
+
 # Netlify MCP Server
 
 [![smithery badge](https://smithery.ai/badge/@DynamicEndpoints/Netlify-MCP-Server)](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server)
