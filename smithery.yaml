@@ -6,8 +6,20 @@ startCommand:
     # JSON Schema defining the configuration options for the MCP.
     type: object
     required: []
-    properties: {}
-  commandFunction:
-    # A function that produces the CLI command to start the MCP on stdio.
-    |-
-    config => ({command:'node', args:['build/index.js']})
+    properties:
+      NETLIFY_AUTH_TOKEN:
+        type: string
+        description: "Netlify Personal Access Token for authentication"
+      NETLIFY_SITE_ID:
+        type: string
+        description: "Default site ID for operations (optional)"
+  commandFunction: |
+    (config) => ({
+      command: 'node',
+      args: ['build/index.js'],
+      env: {
+        ...process.env,
+        ...(config.NETLIFY_AUTH_TOKEN && { NETLIFY_AUTH_TOKEN: config.NETLIFY_AUTH_TOKEN }),
+        ...(config.NETLIFY_SITE_ID && { NETLIFY_SITE_ID: config.NETLIFY_SITE_ID })
+      }
+    })
