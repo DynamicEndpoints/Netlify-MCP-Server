@@ -252,9 +252,32 @@ const SetEnvVarsSchema = z.object({
 });
 
 const DeployFunctionSchema = z.object({
-  path: z.string().describe("Path to the site directory containing functions"),
-  name: z.string().describe("Function name (often inferred from file path)"),
-  runtime: z.string().optional().describe("Function runtime (e.g., nodejs, go)"),
+  functionName: z.string().describe("Function name to deploy"),
+  functionPath: z.string().optional().describe("Path to function file"),
+  runtime: z.string().optional().describe("Function runtime (nodejs, python, go)"),
+});
+
+const InvokeFunctionSchema = z.object({
+  functionName: z.string().describe("Function name to invoke"),
+  payload: z.string().optional().describe("JSON payload to send to function"),
+  identity: z.record(z.string()).optional().describe("Identity object for testing"),
+  querystring: z.record(z.string()).optional().describe("Query string parameters"),
+});
+
+const ServeFunctionsSchema = z.object({
+  functionsDir: z.string().optional().describe("Functions directory path"),
+  port: z.number().optional().describe("Port to serve functions on"),
+});
+
+const BuildFunctionsSchema = z.object({
+  functionsDir: z.string().optional().describe("Functions source directory"),
+  targetDir: z.string().optional().describe("Functions build target directory"),
+});
+
+const CreateFunctionSchema = z.object({
+  name: z.string().describe("Function name"),
+  template: z.string().optional().describe("Function template to use"),
+  language: z.enum(["javascript", "typescript", "go", "rust"]).optional().describe("Programming language"),
 });
 
 const GetLogsSchema = z.object({
@@ -344,6 +367,136 @@ const ListFunctionsSchema = z.object({
 const GetFormSubmissionsSchema = z.object({
   siteId: z.string().describe("Site ID to get form submissions for"),
   formId: z.string().optional().describe("Optional: Specific form ID"),
+});
+
+// Comprehensive missing Netlify CLI schemas for full feature coverage
+
+// Netlify Blobs Management
+const GetBlobSchema = z.object({
+  storeName: z.string().describe("Netlify Blobs store name"),
+  key: z.string().describe("Blob key to retrieve"),
+  outputFile: z.string().optional().describe("Optional: File path to save blob content"),
+});
+
+const SetBlobSchema = z.object({
+  storeName: z.string().describe("Netlify Blobs store name"),
+  key: z.string().describe("Blob key to set"),
+  value: z.string().optional().describe("Optional: Blob value (if not reading from file)"),
+  inputFile: z.string().optional().describe("Optional: File path to read blob content from"),
+});
+
+const DeleteBlobSchema = z.object({
+  storeName: z.string().describe("Netlify Blobs store name"),
+  key: z.string().describe("Blob key to delete"),
+});
+
+const ListBlobsSchema = z.object({
+  storeName: z.string().describe("Netlify Blobs store name"),
+  prefix: z.string().optional().describe("Optional: Key prefix to filter blobs"),
+});
+
+// Dev Server Operations
+const StartDevServerSchema = z.object({
+  port: z.number().optional().describe("Port to run dev server on (default: 8888)"),
+  host: z.string().optional().describe("Host to bind dev server to (default: localhost)"),
+  dir: z.string().optional().describe("Directory to serve (default: current directory)"),
+  command: z.string().optional().describe("Custom command to run"),
+  targetPort: z.number().optional().describe("Port of local dev server to proxy"),
+  framework: z.string().optional().describe("Framework to use for auto-detection"),
+  live: z.boolean().optional().describe("Enable live reload"),
+});
+
+const ServeBuiltSiteSchema = z.object({
+  dir: z.string().optional().describe("Directory to serve (default: publish directory)"),
+  port: z.number().optional().describe("Port to serve on (default: 3999)"),
+  host: z.string().optional().describe("Host to bind to (default: localhost)"),
+});
+
+// Recipe Management
+const ListRecipesSchema = z.object({
+  category: z.string().optional().describe("Filter recipes by category"),
+});
+
+const RunRecipeSchema = z.object({
+  recipeName: z.string().describe("Name of the recipe to run"),
+  siteId: z.string().optional().describe("Site ID to run recipe on"),
+  config: z.record(z.unknown()).optional().describe("Recipe configuration options"),
+});
+
+// Advanced Function Management
+const BuildFunctionSchema = z.object({
+  functionName: z.string().describe("Function name to build"),
+  src: z.string().optional().describe("Source directory for functions"),
+  functionsDir: z.string().optional().describe("Functions directory"),
+});
+
+const InvokeFunctionAdvancedSchema = z.object({
+  functionName: z.string().describe("Function name to invoke"),
+  payload: z.string().optional().describe("JSON payload"),
+  identity: z.record(z.string()).optional().describe("Identity object"),
+  querystring: z.record(z.string()).optional().describe("Query parameters"),
+  port: z.number().optional().describe("Port to invoke function on"),
+  no_timeout: z.boolean().optional().describe("Disable function timeout"),
+});
+
+// Advanced Site Management
+const InitSiteSchema = z.object({
+  name: z.string().optional().describe("Site name"),
+  accountSlug: z.string().optional().describe("Account slug"),
+  template: z.string().optional().describe("Template to use"),
+  gitRemoteUrl: z.string().optional().describe("Git repository URL"),
+});
+
+const OpenSiteSchema = z.object({
+  siteId: z.string().optional().describe("Site ID to open (default: current site)"),
+  admin: z.boolean().optional().describe("Open admin dashboard instead of site"),
+});
+
+// Advanced API Operations
+const CallNetlifyAPISchema = z.object({
+  endpoint: z.string().describe("API endpoint to call (e.g., 'listSites', 'getSite')"),
+  data: z.record(z.unknown()).optional().describe("API call data"),
+  method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]).optional().describe("HTTP method"),
+  raw: z.boolean().optional().describe("Return raw response"),
+});
+
+const ListAPIMethodsSchema = z.object({
+  filter: z.string().optional().describe("Filter methods by name"),
+});
+
+// Monitoring and Logs
+const StreamLogsSchema = z.object({
+  siteId: z.string().describe("Site ID to stream logs for"),
+  functionName: z.string().optional().describe("Specific function to stream logs for"),
+  level: z.enum(["trace", "debug", "info", "warn", "error"]).optional().describe("Log level filter"),
+  duration: z.number().optional().describe("Stream duration in seconds"),
+});
+
+// Account Management
+const SwitchAccountSchema = z.object({
+  accountSlug: z.string().describe("Account slug to switch to"),
+});
+
+const WatchDeploySchema = z.object({
+  siteId: z.string().describe("Site ID to watch"),
+  deployId: z.string().optional().describe("Specific deploy ID to watch"),
+  timeout: z.number().optional().describe("Watch timeout in seconds"),
+});
+
+// Form Management
+const ManageFormSchema = z.object({
+  siteId: z.string().describe("Site ID"),
+  formId: z.string().describe("Form ID"),
+  action: z.enum(["enable", "disable", "delete", "export"]).describe("Action to perform"),
+  format: z.enum(["json", "csv"]).optional().describe("Export format"),
+});
+
+// Analytics
+const GetAnalyticsSchema = z.object({
+  siteId: z.string().describe("Site ID to get analytics for"),
+  from: z.string().optional().describe("Start date (YYYY-MM-DD)"),
+  to: z.string().optional().describe("End date (YYYY-MM-DD)"),
+  resolution: z.enum(["day", "hour"]).optional().describe("Data resolution"),
 });
 
 const EnableBranchDeploySchema = z.object({
@@ -636,8 +789,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           idempotentHint: false,
           openWorldHint: true,
         },
-      },
-      {
+      },      {
         name: "disable-branch-deploy",
         description: "Disable branch deploys for a specific branch",
         inputSchema: zodToJsonSchema(DisableBranchDeploySchema),
@@ -647,6 +799,245 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           destructiveHint: false,
           idempotentHint: false,
           openWorldHint: true,
+        },
+      },
+      // COMPREHENSIVE NETLIFY CLI FEATURES - Expanding from 23 to 45+ tools
+      // Netlify Blobs Management
+      {
+        name: "get-blob",
+        description: "Get a blob from Netlify Blobs storage",
+        inputSchema: zodToJsonSchema(GetBlobSchema),
+        annotations: {
+          title: "Get Blob",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "set-blob",
+        description: "Set a blob in Netlify Blobs storage",
+        inputSchema: zodToJsonSchema(SetBlobSchema),
+        annotations: {
+          title: "Set Blob",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "delete-blob",
+        description: "Delete a blob from Netlify Blobs storage",
+        inputSchema: zodToJsonSchema(DeleteBlobSchema),
+        annotations: {
+          title: "Delete Blob",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "list-blobs",
+        description: "List blobs in Netlify Blobs storage",
+        inputSchema: zodToJsonSchema(ListBlobsSchema),
+        annotations: {
+          title: "List Blobs",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
+        },
+      },
+      // Dev Server Operations
+      {
+        name: "start-dev-server",
+        description: "Start Netlify dev server for local development",
+        inputSchema: zodToJsonSchema(StartDevServerSchema),
+        annotations: {
+          title: "Start Dev Server",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "serve-built-site",
+        description: "Serve a built site locally",
+        inputSchema: zodToJsonSchema(ServeBuiltSiteSchema),
+        annotations: {
+          title: "Serve Built Site",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      // Recipe Management
+      {
+        name: "list-recipes",
+        description: "List available Netlify recipes",
+        inputSchema: zodToJsonSchema(ListRecipesSchema),
+        annotations: {
+          title: "List Recipes",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "run-recipe",
+        description: "Run a Netlify recipe",
+        inputSchema: zodToJsonSchema(RunRecipeSchema),
+        annotations: {
+          title: "Run Recipe",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      // Advanced Function Management
+      {
+        name: "build-function",
+        description: "Build a Netlify function",
+        inputSchema: zodToJsonSchema(BuildFunctionSchema),
+        annotations: {
+          title: "Build Function",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "invoke-function-advanced",
+        description: "Invoke a Netlify function with advanced options",
+        inputSchema: zodToJsonSchema(InvokeFunctionAdvancedSchema),
+        annotations: {
+          title: "Invoke Function Advanced",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      // Advanced Site Management
+      {
+        name: "init-site",
+        description: "Initialize a new Netlify site with advanced options",
+        inputSchema: zodToJsonSchema(InitSiteSchema),
+        annotations: {
+          title: "Initialize Site",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      },
+      {
+        name: "open-site",
+        description: "Open a Netlify site in browser",
+        inputSchema: zodToJsonSchema(OpenSiteSchema),
+        annotations: {
+          title: "Open Site",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      // Advanced API Operations
+      {
+        name: "call-netlify-api",
+        description: "Make a direct call to Netlify API",
+        inputSchema: zodToJsonSchema(CallNetlifyAPISchema),
+        annotations: {
+          title: "Call Netlify API",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "list-api-methods",
+        description: "List available Netlify API methods",
+        inputSchema: zodToJsonSchema(ListAPIMethodsSchema),
+        annotations: {
+          title: "List API Methods",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: true,
+        },
+      },
+      // Monitoring and Logs
+      {
+        name: "stream-logs",
+        description: "Stream live logs from Netlify site or function",
+        inputSchema: zodToJsonSchema(StreamLogsSchema),
+        annotations: {
+          title: "Stream Logs",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      // Account Management
+      {
+        name: "switch-account",
+        description: "Switch to a different Netlify account",
+        inputSchema: zodToJsonSchema(SwitchAccountSchema),
+        annotations: {
+          title: "Switch Account",
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      {
+        name: "watch-deploy",
+        description: "Watch a deploy in real-time",
+        inputSchema: zodToJsonSchema(WatchDeploySchema),
+        annotations: {
+          title: "Watch Deploy",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      // Form Management
+      {
+        name: "manage-form",
+        description: "Manage Netlify forms (enable, disable, delete, export)",
+        inputSchema: zodToJsonSchema(ManageFormSchema),
+        annotations: {
+          title: "Manage Form",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: false,
+        },
+      },
+      // Analytics
+      {
+        name: "get-analytics",
+        description: "Get site analytics data",
+        inputSchema: zodToJsonSchema(GetAnalyticsSchema),
+        annotations: {
+          title: "Get Analytics",
+          readOnlyHint: true,
+          destructiveHint: false,
+          idempotentHint: true,
+          openWorldHint: false,
         },
       },
     ],
@@ -847,6 +1238,184 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       case "disable-branch-deploy": {
         const params = DisableBranchDeploySchema.parse(args);
         const command = `api updateSite --data='{"site_id":"${params.siteId}","build_settings":{"allowed_branches":[]}}'`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "get-blob": {
+        const params = GetBlobSchema.parse(args);
+        let command = `blob:get ${params.storeName} ${params.key}`;
+        if (params.outputFile) command += ` --output ${params.outputFile}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "set-blob": {
+        const params = SetBlobSchema.parse(args);
+        let command = `blob:set ${params.storeName} ${params.key}`;
+        if (params.value) command += ` --value "${params.value}"`;
+        if (params.inputFile) command += ` --input ${params.inputFile}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "delete-blob": {
+        const params = DeleteBlobSchema.parse(args);
+        const command = `blob:delete ${params.storeName} ${params.key}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "list-blobs": {
+        const params = ListBlobsSchema.parse(args);
+        let command = `blob:list ${params.storeName}`;
+        if (params.prefix) command += ` --prefix ${params.prefix}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }      case "start-dev-server": {
+        const params = StartDevServerSchema.parse(args);
+        let command = `dev`;
+        if (params.port) command += ` --port ${params.port}`;
+        if (params.host) command += ` --host ${params.host}`;
+        if (params.dir) command += ` --dir ${params.dir}`;
+        if (params.command) command += ` --command "${params.command}"`;
+        if (params.targetPort) command += ` --target-port ${params.targetPort}`;
+        if (params.framework) command += ` --framework ${params.framework}`;
+        if (params.live) command += ` --live`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }      case "serve-built-site": {
+        const params = ServeBuiltSiteSchema.parse(args);
+        let command = `serve`;
+        if (params.dir) command += ` --dir ${params.dir}`;
+        if (params.port) command += ` --port ${params.port}`;
+        if (params.host) command += ` --host ${params.host}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }      case "list-recipes": {
+        const params = ListRecipesSchema.parse(args);
+        let command = `recipes:list`;
+        if (params.category) command += ` --category ${params.category}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "run-recipe": {
+        const params = RunRecipeSchema.parse(args);
+        let command = `recipes ${params.recipeName}`;
+        if (params.siteId) command += ` --site-id ${params.siteId}`;
+        if (params.config) command += ` --config '${JSON.stringify(params.config)}'`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }      case "build-function": {
+        const params = BuildFunctionSchema.parse(args);
+        let command = `functions:build`;
+        if (params.functionName) command += ` --name ${params.functionName}`;
+        if (params.src) command += ` --src ${params.src}`;
+        if (params.functionsDir) command += ` --functions ${params.functionsDir}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "invoke-function-advanced": {
+        const params = InvokeFunctionAdvancedSchema.parse(args);
+        let command = `functions:invoke ${params.functionName}`;
+        if (params.payload) command += ` --payload '${params.payload}'`;
+        if (params.identity) command += ` --identity '${JSON.stringify(params.identity)}'`;
+        if (params.querystring) command += ` --querystring '${JSON.stringify(params.querystring)}'`;
+        if (params.port) command += ` --port ${params.port}`;
+        if (params.no_timeout) command += ` --no-timeout`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "init-site": {
+        const params = InitSiteSchema.parse(args);
+        let command = `sites:create`;
+        if (params.name) command += ` --name "${params.name}"`;
+        if (params.accountSlug) command += ` --account-slug ${params.accountSlug}`;
+        if (params.template) command += ` --template "${params.template}"`;
+        if (params.gitRemoteUrl) command += ` --git-remote-url "${params.gitRemoteUrl}"`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "open-site": {
+        const params = OpenSiteSchema.parse(args);
+        let command = `open`;
+        if (params.siteId) command += ` --site ${params.siteId}`;        if (params.admin) command += ` --admin`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "call-netlify-api": {
+        const params = CallNetlifyAPISchema.parse(args);
+        let command = `api ${params.endpoint}`;
+        if (params.data) command += ` --data '${JSON.stringify(params.data)}'`;
+        if (params.method) command += ` --method ${params.method}`;
+        if (params.raw) command += ` --raw`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "list-api-methods": {
+        const params = ListAPIMethodsSchema.parse(args);
+        let command = `api --list`;
+        if (params.filter) command += ` --filter ${params.filter}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "stream-logs": {
+        const params = StreamLogsSchema.parse(args);        let command = `logs ${params.siteId}`;
+        if (params.functionName) command += ` --function ${params.functionName}`;
+        if (params.level) command += ` --level ${params.level}`;
+        if (params.duration) command += ` --duration ${params.duration}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "switch-account": {
+        const params = SwitchAccountSchema.parse(args);
+        const command = `switch ${params.accountSlug}`;
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "watch-deploy": {
+        const params = WatchDeploySchema.parse(args);
+        let command = `watch ${params.siteId}`;
+        if (params.deployId) command += ` --deploy ${params.deployId}`;
+        if (params.timeout) command += ` --timeout ${params.timeout}`;
+        const output = await executeNetlifyCommand(command);        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "manage-form": {
+        const params = ManageFormSchema.parse(args);
+        let command = `api`;
+        switch (params.action) {
+          case "enable":
+            command += ` updateForm --data='{"form_id":"${params.formId}","disabled":false}'`;
+            break;
+          case "disable":
+            command += ` updateForm --data='{"form_id":"${params.formId}","disabled":true}'`;
+            break;
+          case "delete":
+            command += ` deleteForm --data='{"form_id":"${params.formId}"}'`;
+            break;
+          case "export":
+            command += ` listFormSubmissions --data='{"form_id":"${params.formId}"}'`;
+            if (params.format === "csv") command += ` --format csv`;
+            break;
+        }
+        const output = await executeNetlifyCommand(command);
+        return { content: [{ type: "text", text: output }] };
+      }
+
+      case "get-analytics": {
+        const params = GetAnalyticsSchema.parse(args);
+        let command = `api getAccountUsageByCapability --data='{"account_id":"current"}'`;
+        // Note: Netlify CLI doesn't have direct analytics command, using API
         const output = await executeNetlifyCommand(command);
         return { content: [{ type: "text", text: output }] };
       }
