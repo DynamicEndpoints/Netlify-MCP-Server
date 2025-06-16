@@ -427,11 +427,12 @@ export class PerformanceOptimizer extends EventEmitter {
     
     this.initializePerformanceOptimization();
   }
-
   private async initializePerformanceOptimization(): Promise<void> {
     // Initialize worker pool if needed
     if (this.config.concurrency.workerPoolSize > 0) {
-      const workerScript = path.join(__dirname, "performance-worker.js");
+      // Use import.meta.url instead of __dirname for ES modules
+      const currentDir = path.dirname(new URL(import.meta.url).pathname);
+      const workerScript = path.join(currentDir, "performance-worker.js");
       await this.createWorkerScript(workerScript);
       this.workerPool = new WorkerPool(workerScript, this.config.concurrency.workerPoolSize);
     }
