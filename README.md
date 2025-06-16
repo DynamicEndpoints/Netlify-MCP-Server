@@ -29,7 +29,7 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 ## ✨ Enhanced Features (NEW!)
 
 ### 🎯 AI-Optimized Workflow Prompts
-8 comprehensive workflow templates designed specifically for AI coding agents:
+28 comprehensive workflow templates designed specifically for AI coding agents:
 - **`netlify-deploy`** - Complete deployment with validation and monitoring
 - **`netlify-setup`** - Full site setup from creation to production
 - **`netlify-environment-setup`** - Environment configuration across contexts
@@ -38,11 +38,33 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 - **`netlify-migration`** - Site migration with optimization
 - **`netlify-optimization`** - Performance, security, and SEO optimization
 - **`netlify-security-audit`** - Complete security audit and hardening
+- **`netlify-performance-audit`** - Comprehensive performance analysis and optimization
+- **`netlify-edge-functions-setup`** - Edge functions deployment and configuration
+- **`netlify-blobs-management`** - Comprehensive blob storage management workflow
+- **`netlify-forms-setup`** - Form handling and submission management setup
+- **`netlify-analytics-dashboard`** - Analytics dashboard setup and monitoring
+- **`netlify-domain-setup`** - Custom domain configuration and DNS management
+- **`netlify-redirects-config`** - URL redirects and rewrite rules configuration
+- **`netlify-build-optimization`** - Build process optimization and caching
+- **`netlify-monitoring-setup`** - Comprehensive monitoring and alerting setup
+- **`netlify-backup-strategy`** - Site backup and disaster recovery planning
+- **`netlify-team-collaboration`** - Team workflow and collaboration setup
+- **`netlify-api-integration`** - API integration and webhook configuration
+- **`netlify-staging-workflow`** - Staging environment and preview deployment workflow
+- **`netlify-seo-optimization`** - SEO optimization and search engine visibility
+- **`netlify-cdn-optimization`** - CDN and edge network optimization
+- **`netlify-compliance-audit`** - Compliance and accessibility audit
+- **`netlify-cost-optimization`** - Cost analysis and optimization recommendations
+- **`netlify-disaster-recovery`** - Disaster recovery testing and procedures
+- **`netlify-advanced-deployment`** - Advanced deployment strategies and blue-green deployments
 
 ### 📊 Comprehensive Resources with Real-time Subscriptions
-12 enhanced data sources with live updates:
-- **Site Resources**: Overview, functions, environment variables, deploys, forms, analytics, logs
-- **Account Resources**: Usage statistics, team information, service status
+32 enhanced data sources with live updates:
+- **Site Resources**: Overview, functions, environment variables, deploys, forms, analytics, logs, edge functions, domains, redirects, headers, performance, security, bandwidth, errors
+- **Blob Storage**: Complete blob storage management and data access
+- **Recipes & API**: Automation recipes and direct API method access
+- **Account Resources**: Usage statistics, team information, billing, members, integrations, tokens, notifications
+- **Global Resources**: Service status, deployment regions, and system health
 - **Real-time Features**: Live subscriptions, automatic cache invalidation, event notifications
 
 ### 🔄 Advanced Subscription System
@@ -137,17 +159,70 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 #### Account Management
 - `switch-account` - Switch between Netlify accounts
 
-### 📋 Resources
+### 📋 Resources (32 Available)
 
 - `netlify://sites` - List all sites (JSON)
+- `netlify://sites/{siteId}/overview` - Complete site overview with functions, deployments, and analytics
 - `netlify://sites/{siteId}/functions` - List site functions (JSON)
 - `netlify://sites/{siteId}/env` - List environment variables (JSON)
 - `netlify://sites/{siteId}/deploys` - List site deployments (JSON)
+- `netlify://sites/{siteId}/deploys/{deployId}` - Detailed information about a specific deployment
+- `netlify://sites/{siteId}/forms` - Form submissions and configuration
+- `netlify://sites/{siteId}/analytics` - Site usage analytics and performance metrics
+- `netlify://sites/{siteId}/logs` - Recent site and function logs
+- `netlify://sites/{siteId}/edge-functions` - List and manage edge functions for a site
+- `netlify://sites/{siteId}/build-hooks` - Manage build hooks and webhook configurations
+- `netlify://sites/{siteId}/domains` - Custom domains and DNS configuration
+- `netlify://sites/{siteId}/redirects` - URL redirects and rewrite rules
+- `netlify://sites/{siteId}/headers` - Custom HTTP headers configuration
+- `netlify://sites/{siteId}/performance` - Site performance analytics and optimization data
+- `netlify://sites/{siteId}/security` - Security headers, SSL, and vulnerability analysis
+- `netlify://sites/{siteId}/bandwidth` - Site bandwidth consumption and analytics
+- `netlify://sites/{siteId}/errors` - Site error logs and exception tracking
+- `netlify://blobs/{storeName}` - Netlify Blobs storage management
+- `netlify://blobs/{storeName}/{key}` - Individual blob data and metadata
+- `netlify://recipes` - Netlify automation recipes and templates
+- `netlify://recipes/{recipeName}` - Detailed recipe configuration and steps
+- `netlify://api/methods` - Available Netlify API endpoints and methods
+- `netlify://account/usage` - Account-level usage statistics and limits
+- `netlify://account/teams` - Team membership and permissions
+- `netlify://account/billing` - Account billing details and usage costs
+- `netlify://account/members` - Team member management and permissions
+- `netlify://account/integrations` - Connected services and integrations
+- `netlify://account/tokens` - Personal access tokens and API keys
+- `netlify://account/notifications` - Email and webhook notification preferences
+- `netlify://global/regions` - Available deployment regions and edge locations
+- `netlify://status` - Current Netlify service status and health
 
-### 💡 Smart Prompts
+### 💡 Smart Prompts (28 Available)
 
 - `netlify-deploy` - Deploy a site with best practices guidance
 - `netlify-setup` - Set up a new Netlify site with configuration
+- `netlify-environment-setup` - Environment configuration across contexts
+- `netlify-troubleshoot` - Comprehensive issue diagnosis and resolution
+- `netlify-function-deploy` - Function deployment with best practices
+- `netlify-migration` - Site migration with optimization
+- `netlify-optimization` - Performance, security, and SEO optimization
+- `netlify-security-audit` - Complete security audit and hardening
+- `netlify-performance-audit` - Comprehensive performance analysis and optimization
+- `netlify-edge-functions-setup` - Edge functions deployment and configuration
+- `netlify-blobs-management` - Comprehensive blob storage management workflow
+- `netlify-forms-setup` - Form handling and submission management setup
+- `netlify-analytics-dashboard` - Analytics dashboard setup and monitoring
+- `netlify-domain-setup` - Custom domain configuration and DNS management
+- `netlify-redirects-config` - URL redirects and rewrite rules configuration
+- `netlify-build-optimization` - Build process optimization and caching
+- `netlify-monitoring-setup` - Comprehensive monitoring and alerting setup
+- `netlify-backup-strategy` - Site backup and disaster recovery planning
+- `netlify-team-collaboration` - Team workflow and collaboration setup
+- `netlify-api-integration` - API integration and webhook configuration
+- `netlify-staging-workflow` - Staging environment and preview deployment workflow
+- `netlify-seo-optimization` - SEO optimization and search engine visibility
+- `netlify-cdn-optimization` - CDN and edge network optimization
+- `netlify-compliance-audit` - Compliance and accessibility audit
+- `netlify-cost-optimization` - Cost analysis and optimization recommendations
+- `netlify-disaster-recovery` - Disaster recovery testing and procedures
+- `netlify-advanced-deployment` - Advanced deployment strategies and blue-green deployments
 
 ## Installation
 
