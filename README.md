@@ -2,7 +2,7 @@
 
 [![smithery badge](https://smithery.ai/badge/@DynamicEndpoints/Netlify-MCP-Server)](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server)
 
-A Model Context Protocol (MCP) server for Netlify, providing comprehensive access to Netlify's features through the latest MCP SDK v1.12.3 and Netlify CLI v22.1.3.
+A Model Context Protocol (MCP) server for Netlify, providing comprehensive access to ALL Netlify CLI features through the latest MCP SDK v1.12.3 and Netlify CLI v22.1.3. Now with 43 tools covering Blobs, Dev Server, Recipes, Analytics, Forms, and advanced API operations.
 
 <a href="https://glama.ai/mcp/servers/rmzusviqom">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/rmzusviqom/badge" alt="Netlify Server MCP server" />
@@ -12,7 +12,15 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 
 - **Updated to MCP SDK v1.12.3** - Latest SDK with improved performance and new capabilities
 - **Netlify CLI v22.1.3** - Latest Netlify CLI with new features and bug fixes
-- **Enhanced API Coverage** - New tools for deploys, forms, functions, and site management
+- **43 Comprehensive Tools** - Complete coverage of Netlify CLI including Blobs, Dev Server, Recipes
+- **Netlify Blobs Support** - Full blob storage management (get, set, delete, list)
+- **Dev Server Integration** - Local development server tools for testing
+- **Recipe System** - Access to Netlify's automation recipes
+- **Advanced API Access** - Direct Netlify API calls and method discovery
+- **Enhanced Analytics** - Site analytics and performance monitoring
+- **Form Management** - Complete form and submission handling
+- **Real-time Monitoring** - Live log streaming and deployment watching
+- **Account Management** - Multi-account switching and management
 - **Improved Resource System** - Better resource handling with JSON output
 - **Smart Prompts** - Pre-built prompts for common Netlify workflows
 - **Better Error Handling** - More robust error reporting and recovery
@@ -45,7 +53,22 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 
 ## Features
 
-### 🛠️ Tools (23 Available)
+### 🛠️ Comprehensive Netlify CLI Coverage (43 Tools)
+
+**Complete Netlify functionality at your fingertips:**
+- **🚀 Deployment & Build Management** - Deploy, build, trigger, and monitor deployments
+- **🏗️ Site Administration** - Create, manage, and configure Netlify sites  
+- **⚙️ Environment Management** - Full environment variable control and cloning
+- **📦 Netlify Blobs Storage** - Complete blob storage operations (get, set, delete, list)
+- **⚡ Serverless Functions** - Build, invoke, and monitor function execution
+- **🔧 Development Tools** - Local dev server and built site serving
+- **🤖 Recipe Automation** - Access to Netlify's automation recipes
+- **📊 Analytics & Monitoring** - Site analytics, real-time logs, and performance data
+- **📋 Form Management** - Handle forms and submissions
+- **🔌 Direct API Access** - Make direct Netlify API calls with method discovery
+- **👥 Account Management** - Multi-account switching and team management
+
+### 🛠️ Tools (43 Available)
 
 #### Core Deployment
 - `deploy-site` - Deploy a site to Netlify (production or preview)
@@ -60,6 +83,8 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 - `link-site` - Link current directory to a Netlify site
 - `unlink-site` - Unlink current directory from Netlify site
 - `get-status` - Get current Netlify status
+- `init-site` - Initialize a new site in current directory
+- `open-site` - Open site in browser
 
 #### Environment Variables
 - `set-env-vars` - Set environment variables for a site
@@ -73,13 +98,44 @@ A Model Context Protocol (MCP) server for Netlify, providing comprehensive acces
 - `get-deploy-info` - Get information about a specific deploy
 - `cancel-deploy` - Cancel a running deploy
 - `restore-deploy` - Restore a previous deploy
+- `watch-deploy` - Watch deployment progress in real-time
 
-#### Functions & Features
+#### Functions & Edge Functions
 - `list-functions` - List all functions for a site
 - `get-logs` - Get function logs for a site
+- `build-function` - Build a serverless function
+- `invoke-function-advanced` - Invoke function with advanced options
+
+#### Netlify Blobs (Storage)
+- `get-blob` - Get a blob from Netlify Blobs storage
+- `set-blob` - Set/store a blob in Netlify Blobs storage
+- `delete-blob` - Delete a blob from storage
+- `list-blobs` - List all blobs in a store
+
+#### Development & Testing
+- `start-dev-server` - Start Netlify dev server locally
+- `serve-built-site` - Serve a built site locally
+
+#### Recipes & Automation
+- `list-recipes` - List available Netlify recipes
+- `run-recipe` - Run a specific Netlify recipe
+
+#### API & Advanced Operations
+- `call-netlify-api` - Make direct Netlify API calls
+- `list-api-methods` - List available API methods
+
+#### Forms & Analytics
 - `get-form-submissions` - Get form submissions for a site
+- `manage-form` - Manage site forms and submissions
+- `get-analytics` - Get site analytics data
+
+#### Monitoring & Logs
+- `stream-logs` - Stream real-time logs from functions
 - `enable-branch-deploy` - Enable branch deploys for a specific branch
 - `disable-branch-deploy` - Disable branch deploys for a specific branch
+
+#### Account Management
+- `switch-account` - Switch between Netlify accounts
 
 ### 📋 Resources
 
@@ -167,7 +223,7 @@ Add the following configuration to your MCP settings file, replacing `"YOUR_NETL
 - **Claude Desktop (macOS)**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Other MCP clients**: Consult your specific MCP client documentation
 
-## Available Tools (Netlify CLI v19.1.5 Compatible)
+## Available Tools (Netlify CLI v22.1.3 Compatible)
 
 *(Parameters are based on the Zod schemas defined in `src/index.ts`)*
 
@@ -299,6 +355,57 @@ Delete a site from Netlify.
 }
 ```
 
+### Advanced Site Management
+
+#### init-site
+Initialize a new site in the current directory.
+```json
+{
+  "name": "string?",        // Optional: Site name
+  "accountSlug": "string?", // Optional: Account slug
+  "manual": "boolean?"      // Optional: Skip git detection
+}
+```
+*Example:*
+```json
+{
+  "name": "my-new-site",
+  "manual": true
+}
+```
+
+#### open-site
+Open site in browser.
+```json
+{
+  "siteId": "string?",     // Optional: Site ID (if not linked)
+  "admin": "boolean?"      // Optional: Open admin panel instead of site
+}
+```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "admin": true
+}
+```
+
+#### watch-deploy
+Watch deployment progress in real-time.
+```json
+{
+  "siteId": "string",      // Required: Site ID
+  "deployId": "string?"    // Optional: Specific deploy ID to watch
+}
+```
+*Example:*
+```json
+{
+  "siteId": "your-site-id-here",
+  "deployId": "deploy-id-123"
+}
+```
+
 ### Environment Variable Management
 
 #### set-env-vars
@@ -409,19 +516,28 @@ View function logs. Site context is passed via `NETLIFY_SITE_ID` env var.
 }
 ```
 
-## Available Resources (Netlify CLI v19.1.5 Compatible)
+## Available Resources (Netlify CLI v22.1.3 Compatible)
 
 Access Netlify data directly using these resource URIs:
 
 *   `netlify://sites`: List all sites (JSON output of `sites:list --json`)
 *   `netlify://sites/{siteId}/functions`: List functions for a site (JSON output of `functions:list --json`, requires `NETLIFY_SITE_ID={siteId}` env var)
 *   `netlify://sites/{siteId}/env`: List environment variables for a site (JSON output of `env:list --json`, requires `NETLIFY_SITE_ID={siteId}` env var)
+*   `netlify://sites/{siteId}/deploys`: List deployments for a site (JSON output of `deploys:list --json`, requires `NETLIFY_SITE_ID={siteId}` env var)
+*   `netlify://sites/{siteId}/forms`: List forms for a site (JSON output from form management tools)
+*   `netlify://sites/{siteId}/analytics`: Site analytics data (JSON output from analytics tools)
+*   `netlify://blobs/{storeName}`: List blobs in a store (JSON output from blob storage tools)
+*   `netlify://recipes`: List available recipes (JSON output from recipe tools)
+*   `netlify://api/methods`: List available API methods (JSON output from API discovery tools)
 
-## Limitations (Netlify CLI v19.1.5)
+## Limitations (Netlify CLI v22.1.3)
 
--   **Interactive Commands:** Commands requiring interactive prompts (like `netlify login`, `netlify init`, `netlify dev`) are not supported by this server. Use a Personal Access Token for authentication.
--   **Site Context:** Many commands (`env:*`, `logs:function`, `build`, `trigger-build`, `functions:list`) require site context. This server passes the required `siteId` via the `NETLIFY_SITE_ID` environment variable when executing these commands. Commands like `status` and `unlink` operate on the *current working directory* of the server, which is typically not linked, and thus may not function as expected when called via the MCP server.
--   **Unsupported Commands:** Functionality related to DNS, Forms, Plugins, Hooks, and Deploys (listing specific deploys, getting deploy status) has been removed due to incompatibility with CLI v19.1.5.
+-   **Interactive Commands:** Commands requiring interactive prompts (like `netlify login`, `netlify init` without parameters, interactive dev mode) are not supported by this server. Use a Personal Access Token for authentication and provide required parameters explicitly.
+-   **Site Context:** Many commands require site context. This server passes the required `siteId` via the `NETLIFY_SITE_ID` environment variable when executing these commands. Commands that operate on the *current working directory* (like `status` and `unlink`) may not function as expected when called via the MCP server unless the server directory is properly linked.
+-   **Browser-dependent Features:** Some commands that require opening browsers or interactive authentication flows may have limited functionality in the MCP server environment.
+-   **Real-time Streaming:** While log streaming is supported, the output is captured and returned rather than providing a true real-time stream interface.
+
+**Note:** This comprehensive implementation now covers all major Netlify CLI functionality including Blobs, Dev Server, Recipes, Analytics, Forms, and advanced API operations. Previously unsupported features like DNS, Plugins, and Hooks may still have limited support depending on CLI capabilities.
 
 ## Development
 
