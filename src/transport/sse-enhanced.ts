@@ -18,7 +18,7 @@ export interface SSETransportOptions {
 export class EnhancedSSETransport extends EventEmitter implements Transport {
   private server: any;
   private wsServer?: WebSocketServer;
-  private connections = new Map<string, SSEConnection>();
+  private connections = new Map<string, BaseConnection>();
   private options: Required<SSETransportOptions>;
   private isRunning = false;
   private heartbeatTimer?: NodeJS.Timeout;
@@ -308,14 +308,14 @@ export class EnhancedSSETransport extends EventEmitter implements Transport {
 }
 
 // Base connection interface
-interface SSEConnection {
+interface BaseConnection {
   id: string;
   send(message: string): Promise<void>;
   close(): void;
 }
 
 // SSE connection implementation
-class SSEConnection implements SSEConnection {
+class SSEConnection implements BaseConnection {
   constructor(public id: string, private response: ServerResponse) {}
 
   async send(message: string): Promise<void> {
@@ -339,7 +339,7 @@ class SSEConnection implements SSEConnection {
 }
 
 // WebSocket connection implementation
-class WebSocketConnection implements SSEConnection {
+class WebSocketConnection implements BaseConnection {
   constructor(public id: string, private ws: WebSocket) {}
 
   async send(message: string): Promise<void> {

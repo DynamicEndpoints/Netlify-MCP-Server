@@ -342,11 +342,10 @@ export class PluginManager extends EventEmitter {
         debug: (message: string, metadata?: any) => {
           console.error(`[${new Date().toISOString()}] [${pluginId}] DEBUG: ${message}`, metadata);
         },
-      },
-      storage: {
+      },      storage: {
         get: async (key: string) => pluginStorage.get(key),
-        set: async (key: string, value: any) => pluginStorage.set(key, value),
-        delete: async (key: string) => pluginStorage.delete(key),
+        set: async (key: string, value: any) => { await pluginStorage.set(key, value); },
+        delete: async (key: string) => { await pluginStorage.delete(key); },
         has: async (key: string) => pluginStorage.has(key),
       },
       config: manifest.configuration,

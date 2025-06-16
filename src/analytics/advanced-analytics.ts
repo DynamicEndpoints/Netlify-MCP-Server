@@ -147,10 +147,9 @@ export class AdvancedAnalytics extends EventEmitter {
     this.trackEvent("resource", "access", resourceUri, success ? "success" : "failure", duration);
     this.trackPerformance(`resource_${resourceUri}`, duration, success);
   }
-
   // Track prompt usage
-  trackPromptUsage(promptName: string, arguments?: any): void {
-    this.trackEvent("prompt", "usage", promptName, undefined, undefined, arguments);
+  trackPromptUsage(promptName: string, args?: any): void {
+    this.trackEvent("prompt", "usage", promptName, undefined, undefined, args);
   }
 
   // Track subscription events
