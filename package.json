@@ -22,12 +22,15 @@
     "url": "https://github.com/DynamicEndpoints/Netlify-MCP-Server"
   },
   "author": "DynamicEndpoints",
-  "license": "MIT",
-  "scripts": {
+  "license": "MIT",  "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "watch": "tsc -w",
     "dev": "npm run build && node build/index.js",
-    "start": "node build/index.js"
+    "start": "node build/index.js",
+    "start:sse": "node start-sse.js",
+    "start:sse:dev": "npm run build && node start-sse.js",
+    "test:discovery": "node test-mcp.js",
+    "test:tools": "node test-discovery.js"
   },
   "files": [
     "build"

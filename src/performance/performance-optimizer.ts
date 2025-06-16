@@ -427,11 +427,11 @@ export class PerformanceOptimizer extends EventEmitter {
     
     this.initializePerformanceOptimization();
   }
-  private async initializePerformanceOptimization(): Promise<void> {
-    // Initialize worker pool if needed
-    if (this.config.concurrency.workerPoolSize > 0) {
-      // Use import.meta.url instead of __dirname for ES modules
-      const currentDir = path.dirname(new URL(import.meta.url).pathname);
+  private async initializePerformanceOptimization(): Promise<void> {    // Initialize worker pool if needed - disabled for Windows compatibility
+    if (false && this.config.concurrency.workerPoolSize > 0) {
+      // Use import.meta.url instead of __dirname for ES modules - fix Windows path issue
+      const currentUrl = new URL(import.meta.url);
+      const currentDir = path.dirname(currentUrl.pathname.replace(/^\/([A-Z]:)/, '$1')); // Fix Windows drive letter
       const workerScript = path.join(currentDir, "performance-worker.js");
       await this.createWorkerScript(workerScript);
       this.workerPool = new WorkerPool(workerScript, this.config.concurrency.workerPoolSize);

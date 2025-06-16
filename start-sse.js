@@ -13,5 +13,5 @@ console.log(`  - Health: http://localhost:${process.env.MCP_SSE_PORT}/health`);
 console.log(`  - Stats: http://localhost:${process.env.MCP_SSE_PORT}/stats`);
 console.log('');
 
-// Import and run the server
-require('./build/index.js');
+// Import and run the server using ES module syntax
+import('./build/index.js');
