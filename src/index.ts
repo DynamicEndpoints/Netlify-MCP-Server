@@ -22,10 +22,44 @@ import { WebSocketServer } from "ws";
 import * as fs from "fs";
 import * as path from "path";
 
+// Import enhancement modules
+import { EnhancedSSETransport } from "./transport/sse-enhanced.js";
+import { AdvancedAnalytics } from "./analytics/advanced-analytics.js";
+import { CustomWorkflowManager } from "./workflows/custom-workflows.js";
+import { PluginManager } from "./plugins/plugin-manager.js";
+import { PerformanceOptimizer } from "./performance/performance-optimizer.js";
+
 // Global event emitter for resource updates
 const resourceEmitter = new EventEmitter();
 
-// Create server instance using the latest SDK patterns
+// Initialize enhancement systems
+const analytics = new AdvancedAnalytics("./analytics");
+const workflowManager = new CustomWorkflowManager("./workflows");
+const pluginManager = new PluginManager("./plugins");
+const performanceOptimizer = new PerformanceOptimizer({
+  caching: {
+    enabled: true,
+    ttl: 300000, // 5 minutes
+    maxSize: 1000,
+    strategy: "lru",
+  },
+  concurrency: {
+    maxConcurrentOperations: 15,
+    queueMaxSize: 1000,
+    workerPoolSize: 4,
+  },
+  optimization: {
+    enableRequestBatching: true,
+    batchTimeout: 50,
+    enableCompression: true,
+    enableLazyLoading: true,
+  },
+});
+
+// Enhanced SSE transport instance
+let enhancedSSETransport: EnhancedSSETransport | null = null;
+
+// Create server instance using the latest SDK patterns with enhanced capabilities
 const server = new Server({
   name: "netlify-mcp-server",
   version: "2.0.0",
@@ -43,38 +77,75 @@ const server = new Server({
       listChanged: true,
     },
     logging: {},
-    experimental: {},
+    experimental: {
+      customWorkflows: true,
+      advancedAnalytics: true,
+      pluginSystem: true,
+      performanceOptimization: true,
+      enhancedSSE: true,
+    },
   },
 });
 
-// Helper function for executing Netlify CLI commands with enhanced logging
+// Helper function for executing Netlify CLI commands with enhanced logging, performance optimization, and analytics
 async function executeNetlifyCommand(command: string, siteId?: string): Promise<string> {
-  try {
-    console.error(`[${new Date().toISOString()}] Executing: netlify ${command}`);
+  const startTime = Date.now();
+  const cacheKey = `netlify_cmd_${command}_${siteId || 'global'}`;
+  
+  return performanceOptimizer.executeOptimized(
+    async () => {
+      try {
+        console.error(`[${new Date().toISOString()}] Executing: netlify ${command}`);
+        analytics.trackEvent("command", "netlify", "execute", command, undefined, { siteId });
 
-    const env = { ...process.env };
-    if (siteId) {
-      env['NETLIFY_SITE_ID'] = siteId;
-      console.error(`[${new Date().toISOString()}] Using NETLIFY_SITE_ID: ${siteId}`);
-    }
+        const env = { ...process.env };
+        if (siteId) {
+          env['NETLIFY_SITE_ID'] = siteId;
+          console.error(`[${new Date().toISOString()}] Using NETLIFY_SITE_ID: ${siteId}`);
+        }
 
-    const output = execSync(`netlify ${command}`, { encoding: 'utf8', env: env });
-    console.error(`[${new Date().toISOString()}] Success: ${output.substring(0, 100)}...`);
-    
-    // Emit resource update events for certain commands
-    if (command.includes('deploy') || command.includes('env:set') || command.includes('sites:create')) {
-      resourceEmitter.emit('resourceChanged', { command, siteId });
+        const output = execSync(`netlify ${command}`, { encoding: 'utf8', env: env });
+        const duration = Date.now() - startTime;
+        
+        console.error(`[${new Date().toISOString()}] Success: ${output.substring(0, 100)}...`);
+        
+        // Track successful execution
+        analytics.trackPerformance(`netlify_${command}`, duration, true);
+        
+        // Emit resource update events for certain commands
+        if (command.includes('deploy') || command.includes('env:set') || command.includes('sites:create')) {
+          resourceEmitter.emit('resourceChanged', { command, siteId });
+        }
+        
+        // Execute hooks
+        await pluginManager.executeHooks('command-executed', { command, siteId, success: true, duration });
+        
+        return output;
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        
+        console.error(`[${new Date().toISOString()}] Error executing command: netlify ${command}`, error);
+        
+        // Track failed execution
+        analytics.trackPerformance(`netlify_${command}`, duration, false, error instanceof Error ? error.message : String(error));
+        analytics.trackError("command_execution", error instanceof Error ? error.message : String(error), command);
+        
+        // Execute error hooks
+        await pluginManager.executeHooks('command-error', { command, siteId, error, duration });
+        
+        if (error instanceof Error) {
+          const stderr = (error as any).stderr ? (error as any).stderr.toString() : '';
+          throw new Error(`Netlify CLI error: ${error.message}\n${stderr}`);
+        }
+        throw error;
+      }
+    },
+    {
+      cacheKey: command.includes('list') || command.includes('status') ? cacheKey : undefined,
+      cacheTtl: 60000, // 1 minute cache for list/status commands
+      priority: command.includes('deploy') ? 'high' : 'normal',
     }
-    
-    return output;
-  } catch (error) {
-    console.error(`[${new Date().toISOString()}] Error executing command: netlify ${command}`, error);
-    if (error instanceof Error) {
-      const stderr = (error as any).stderr ? (error as any).stderr.toString() : '';
-      throw new Error(`Netlify CLI error: ${error.message}\n${stderr}`);
-    }
-    throw error;
-  }
+  );
 }
 
 // Enhanced site management with caching
