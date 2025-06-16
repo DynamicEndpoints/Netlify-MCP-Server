@@ -13,6 +13,9 @@ import {
   UnsubscribeRequestSchema,
   ListRootsRequestSchema,
   CreateMessageRequestSchema,
+  LATEST_PROTOCOL_VERSION,
+  ProgressTokenSchema,
+  CursorSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import { execSync } from "child_process";
@@ -21,61 +24,87 @@ import { createServer, IncomingMessage, ServerResponse } from "http";
 import { WebSocketServer } from "ws";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
-// Import enhancement modules (simplified for reliability)
-// import { EnhancedSSETransport } from "./transport/sse-enhanced.js";
-// import { AdvancedAnalytics } from "./analytics/advanced-analytics.js";
-// import { CustomWorkflowManager } from "./workflows/custom-workflows.js";
-// import { PluginManager } from "./plugins/plugin-manager.js";
-// import { PerformanceOptimizer } from "./performance/performance-optimizer.js";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Import enhancement modules (enabled for full feature set)
+import { EnhancedSSETransport } from "./transport/sse-enhanced.js";
+import { AdvancedAnalytics } from "./analytics/advanced-analytics.js";
+import { CustomWorkflowManager } from "./workflows/custom-workflows.js";
+import { PluginManager } from "./plugins/plugin-manager.js";
+import { PerformanceOptimizer } from "./performance/performance-optimizer.js";
 
 // Global event emitter for resource updates
 const resourceEmitter = new EventEmitter();
 
-// Simplified initialization without complex enhancement systems
-// const analytics = new AdvancedAnalytics("./analytics");
-// const workflowManager = new CustomWorkflowManager("./workflows");
-// const pluginManager = new PluginManager("./plugins");
-// const performanceOptimizer = new PerformanceOptimizer({
-//   caching: {
-//     enabled: true,
-//     ttl: 300000, // 5 minutes
-//     maxSize: 1000,
-//     strategy: "lru",
-//   },
-//   concurrency: {
-//     maxConcurrentOperations: 15,
-//     queueMaxSize: 1000,
-//     workerPoolSize: 0, // Disable worker pool for now
-//   },
-//   optimization: {
-//     enableRequestBatching: true,
-//     batchTimeout: 50,
-//     enableCompression: true,
-//     enableLazyLoading: true,
-//   },
-// });
+// Initialize enhancement systems with latest features
+const analytics = new AdvancedAnalytics(path.join(__dirname, "analytics"));
+const workflowManager = new CustomWorkflowManager(path.join(__dirname, "workflows"));
+const pluginManager = new PluginManager(path.join(__dirname, "plugins"));
+const performanceOptimizer = new PerformanceOptimizer({
+  caching: {
+    enabled: true,
+    ttl: 300000, // 5 minutes
+    maxSize: 1000,
+    strategy: "lru",
+  },
+  concurrency: {
+    maxConcurrentOperations: 20,
+    queueMaxSize: 2000,
+    workerPoolSize: 4,
+  },
+  optimization: {
+    enableRequestBatching: true,
+    batchTimeout: 50,
+    enableCompression: true,
+    enableLazyLoading: true,
+  },
+});
 
 // Enhanced SSE transport instance
-// let enhancedSSETransport: EnhancedSSETransport | null = null;
+let enhancedSSETransport: EnhancedSSETransport | null = null;
 
-// Create server instance using the latest SDK patterns with enhanced capabilities
+// HTTP server for SSE transport
+let httpServer: ReturnType<typeof createServer> | null = null;
+
+// Create server instance with latest MCP SDK features and protocol version
 const server = new Server({
   name: "netlify-mcp-server",
   version: "2.0.0",
+  protocolVersion: LATEST_PROTOCOL_VERSION,
 }, {
   capabilities: {
-    tools: {},
+    tools: {
+      listChanged: true,
+    },
     resources: {
       subscribe: true,
       listChanged: true,
     },
-    prompts: {},
-    logging: {},
+    prompts: {
+      listChanged: true,
+    },
+    roots: {
+      listChanged: true,
+    },
+    logging: {
+      // Enable logging capabilities
+    },
+    experimental: {
+      // Enable experimental features
+      customWorkflows: true,
+      advancedAnalytics: true,
+      pluginSystem: true,
+      performanceOptimization: true,
+      enhancedSSE: true,
+    },
   },
 });
 
-// Helper function for executing Netlify CLI commands with simplified error handling
+// Helper function for executing Netlify CLI commands with enhanced logging, performance optimization, and analytics
 async function executeNetlifyCommand(command: string, siteId?: string): Promise<string> {
   // LAZY LOADING: Check for authentication token ONLY when commands are executed, not when tools are listed
   if (!process.env.NETLIFY_AUTH_TOKEN) {
@@ -87,38 +116,62 @@ async function executeNetlifyCommand(command: string, siteId?: string): Promise<
   }
 
   const startTime = Date.now();
+  const cacheKey = `netlify_cmd_${command}_${siteId || 'global'}`;
   
-  try {
-    console.error(`[${new Date().toISOString()}] Executing: netlify ${command}`);
+  return performanceOptimizer.executeOptimized(
+    async () => {
+      try {
+        console.error(`[${new Date().toISOString()}] Executing: netlify ${command}`);
+        analytics.trackEvent("command", "netlify", "execute", command, undefined, { siteId });
 
-    const env = { ...process.env };
-    if (siteId) {
-      env['NETLIFY_SITE_ID'] = siteId;
-      console.error(`[${new Date().toISOString()}] Using NETLIFY_SITE_ID: ${siteId}`);
-    }
+        const env = { ...process.env };
+        if (siteId) {
+          env['NETLIFY_SITE_ID'] = siteId;
+          console.error(`[${new Date().toISOString()}] Using NETLIFY_SITE_ID: ${siteId}`);
+        }
 
-    const output = execSync(`netlify ${command}`, { encoding: 'utf8', env: env });
-    const duration = Date.now() - startTime;
-    
-    console.error(`[${new Date().toISOString()}] Success: ${output.substring(0, 100)}...`);
-    
-    // Emit resource update events for certain commands
-    if (command.includes('deploy') || command.includes('env:set') || command.includes('sites:create')) {
-      resourceEmitter.emit('resourceChanged', { command, siteId });
+        const output = execSync(`netlify ${command}`, { encoding: 'utf8', env: env });
+        const duration = Date.now() - startTime;
+        
+        console.error(`[${new Date().toISOString()}] Success: ${output.substring(0, 100)}...`);
+        
+        // Track successful execution
+        analytics.trackPerformance(`netlify_${command}`, duration, true);
+        
+        // Emit resource update events for certain commands
+        if (command.includes('deploy') || command.includes('env:set') || command.includes('sites:create')) {
+          resourceEmitter.emit('resourceChanged', { command, siteId });
+        }
+        
+        // Execute hooks
+        await pluginManager.executeHooks('command-executed', { command, siteId, success: true, duration });
+        
+        return output;
+      } catch (error) {
+        const duration = Date.now() - startTime;
+        
+        console.error(`[${new Date().toISOString()}] Error executing command: netlify ${command}`, error);
+        
+        // Track failed execution
+        analytics.trackPerformance(`netlify_${command}`, duration, false, error instanceof Error ? error.message : String(error));
+        analytics.trackError("command_execution", error instanceof Error ? error.message : String(error), command);
+        
+        // Execute error hooks
+        await pluginManager.executeHooks('command-error', { command, siteId, error, duration });
+        
+        if (error instanceof Error) {
+          const stderr = (error as any).stderr ? (error as any).stderr.toString() : '';
+          throw new Error(`Netlify CLI error: ${error.message}\n${stderr}`);
+        }
+        throw error;
+      }
+    },
+    {
+      cacheKey: command.includes('list') || command.includes('status') ? cacheKey : undefined,
+      cacheTtl: 60000, // 1 minute cache for list/status commands
+      priority: command.includes('deploy') ? 'high' : 'normal',
     }
-    
-    return output;
-  } catch (error) {
-    const duration = Date.now() - startTime;
-    
-    console.error(`[${new Date().toISOString()}] Error executing command: netlify ${command}`, error);
-    
-    if (error instanceof Error) {
-      const stderr = (error as any).stderr ? (error as any).stderr.toString() : '';
-      throw new Error(`Netlify CLI error: ${error.message}\n${stderr}`);
-    }
-    throw error;
-  }
+  );
 }
 
 // Enhanced site management with caching
@@ -811,6 +864,761 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 // Resources and other handlers omitted for brevity - they work the same way
 // The key lazy loading is implemented in the tools handler above
 
+// Enhanced resources handler with comprehensive site data
+server.setRequestHandler(ListResourcesRequestSchema, async () => {
+  return {
+    resources: [
+      {
+        uri: "netlify://sites",
+        name: "List all Netlify sites",
+        description: "Get a comprehensive list of all sites with metadata",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/overview",
+        name: "Site overview",
+        description: "Complete site overview with functions, deployments, and analytics",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/functions",
+        name: "Site functions",
+        description: "List all functions for a specific site",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/env",
+        name: "Environment variables",
+        description: "List environment variables by context",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/deploys",
+        name: "Deploy history",
+        description: "Recent deployments with statistics",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/deploys/{deployId}",
+        name: "Deploy details",
+        description: "Detailed information about a specific deployment",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/forms",
+        name: "Form submissions",
+        description: "Form submissions and configuration",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/analytics",
+        name: "Site analytics",
+        description: "Site usage analytics and performance metrics",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://sites/{siteId}/logs",
+        name: "Site logs",
+        description: "Recent site and function logs",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://account/usage",
+        name: "Account usage",
+        description: "Account-level usage statistics and limits",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://account/teams",
+        name: "Team information",
+        description: "Team membership and permissions",
+        mimeType: "application/json",
+      },
+      {
+        uri: "netlify://status",
+        name: "Netlify service status",
+        description: "Current Netlify service status and health",
+        mimeType: "application/json",
+      },
+    ],
+  };
+});
+
+// Enhanced resource reader with comprehensive data handling
+server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
+  const { uri } = request.params;
+  
+  try {
+    if (uri === "netlify://sites") {
+      const sites = await siteManager.getSites();
+      return {
+        contents: [
+          {
+            uri,
+            mimeType: "application/json",
+            text: JSON.stringify({
+              sites,
+              count: sites.length,
+              lastUpdated: new Date().toISOString(),
+            }, null, 2),
+          },
+        ],
+      };
+    }
+
+    if (uri.startsWith("netlify://sites/")) {
+      const uriParts = uri.split('/');
+      const siteId = uriParts[2];
+      const resource = uriParts[3];
+      const subResource = uriParts[4];
+
+      switch (resource) {
+        case "overview": {
+          const site = await siteManager.getSiteById(siteId);
+          if (!site) {
+            throw new Error(`Site ${siteId} not found`);
+          }
+          
+          try {
+            const [functions, deploys, env] = await Promise.allSettled([
+              executeNetlifyCommand(`functions:list --json`, siteId),
+              executeNetlifyCommand(`api listSiteDeploys --data='{"site_id":"${siteId}","per_page":5}'`),
+              executeNetlifyCommand(`env:list --json`, siteId),
+            ]);
+
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    site,
+                    functions: functions.status === 'fulfilled' ? JSON.parse(functions.value) : [],
+                    recentDeploys: deploys.status === 'fulfilled' ? JSON.parse(deploys.value) : [],
+                    environmentVariables: env.status === 'fulfilled' ? JSON.parse(env.value) : [],
+                    lastUpdated: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    site,
+                    error: "Partial data available - some features may require authentication",
+                    lastUpdated: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
+        case "functions": {
+          try {
+            const command = `functions:list --json`;
+            const output = await executeNetlifyCommand(command, siteId);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: output,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    error: "Unable to fetch functions data",
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                    timestamp: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
+        case "env": {
+          try {
+            const command = `env:list --json`;
+            const output = await executeNetlifyCommand(command, siteId);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: output,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    error: "Unable to fetch environment variables",
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                    timestamp: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
+        case "deploys": {
+          if (subResource) {
+            // Specific deploy
+            const deployId = subResource;
+            try {
+              const command = `api getDeploy --data='{"deploy_id":"${deployId}"}'`;
+              const output = await executeNetlifyCommand(command);
+              return {
+                contents: [
+                  {
+                    uri,
+                    mimeType: "application/json",
+                    text: output,
+                  },
+                ],
+              };
+            } catch (error) {
+              return {
+                contents: [
+                  {
+                    uri,
+                    mimeType: "application/json",
+                    text: JSON.stringify({
+                      error: "Deploy not found or access restricted",
+                      deployId,
+                      timestamp: new Date().toISOString(),
+                    }, null, 2),
+                  },
+                ],
+              };
+            }
+          } else {
+            // List deploys
+            try {
+              const command = `api listSiteDeploys --data='{"site_id":"${siteId}","per_page":10}'`;
+              const output = await executeNetlifyCommand(command);
+              const deploys = JSON.parse(output);
+              
+              // Add deploy statistics
+              const deployStats = {
+                total: deploys.length,
+                successful: deploys.filter((d: any) => d.state === 'ready').length,
+                failed: deploys.filter((d: any) => d.state === 'error').length,
+                building: deploys.filter((d: any) => d.state === 'building').length,
+              };
+
+              return {
+                contents: [
+                  {
+                    uri,
+                    mimeType: "application/json",
+                    text: JSON.stringify({
+                      deploys,
+                      statistics: deployStats,
+                      total: deploys.length,
+                      lastUpdated: new Date().toISOString(),
+                    }, null, 2),
+                  },
+                ],
+              };
+            } catch (error) {
+              return {
+                contents: [
+                  {
+                    uri,
+                    mimeType: "application/json",
+                    text: JSON.stringify({
+                      error: "Unable to fetch deploys data",
+                      message: error instanceof Error ? error.message : 'Unknown error',
+                      timestamp: new Date().toISOString(),
+                    }, null, 2),
+                  },
+                ],
+              };
+            }
+          }
+        }
+
+        case "forms": {
+          try {
+            const command = `api listSiteForms --data='{"site_id":"${siteId}"}'`;
+            const output = await executeNetlifyCommand(command);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: output,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    error: "Unable to fetch forms data",
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                    timestamp: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
+        case "analytics": {
+          try {
+            const command = `api getSiteAnalytics --data='{"site_id":"${siteId}"}'`;
+            const output = await executeNetlifyCommand(command);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: output,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    error: "Analytics data not available or access restricted",
+                    message: "This feature may require a paid plan",
+                    timestamp: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+
+        case "logs": {
+          try {
+            const command = `functions:logs --json`;
+            const output = await executeNetlifyCommand(command, siteId);
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: output,
+                },
+              ],
+            };
+          } catch (error) {
+            return {
+              contents: [
+                {
+                  uri,
+                  mimeType: "application/json",
+                  text: JSON.stringify({
+                    error: "Unable to fetch logs",
+                    message: error instanceof Error ? error.message : 'Unknown error',
+                    timestamp: new Date().toISOString(),
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+        }
+      }
+    }
+
+    throw new Error(`Resource not found: ${uri}`);
+  } catch (error) {
+    console.error(`Error loading resource ${uri}:`, error);
+    return {
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify({
+            error: "Resource loading failed",
+            message: error instanceof Error ? error.message : 'Unknown error',
+            uri,
+            timestamp: new Date().toISOString(),
+          }, null, 2),
+        },
+      ],
+    };
+  }
+});
+
+// Enhanced prompts handler with comprehensive workflow templates
+server.setRequestHandler(ListPromptsRequestSchema, async () => {
+  return {
+    prompts: [
+      {
+        name: "netlify-deploy",
+        description: "Complete deployment workflow with validation and monitoring",
+        arguments: [
+          {
+            name: "path",
+            description: "Site directory path",
+            required: true,
+          },
+          {
+            name: "production",
+            description: "Deploy to production",
+            required: false,
+          },
+          {
+            name: "message",
+            description: "Deploy message",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-setup",
+        description: "Complete site setup workflow",
+        arguments: [
+          {
+            name: "siteName",
+            description: "Name for the new site",
+            required: true,
+          },
+          {
+            name: "buildCommand",
+            description: "Build command (default: npm run build)",
+            required: false,
+          },
+          {
+            name: "publishDir",
+            description: "Publish directory (default: build)",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-environment-setup",
+        description: "Environment configuration across contexts",
+        arguments: [
+          {
+            name: "siteId",
+            description: "Site ID to configure",
+            required: true,
+          },
+          {
+            name: "environment",
+            description: "Target environment (development, staging, production)",
+            required: true,
+          },
+        ],
+      },
+      {
+        name: "netlify-troubleshoot",
+        description: "Comprehensive issue diagnosis and resolution",
+        arguments: [
+          {
+            name: "siteId",
+            description: "Site ID to troubleshoot",
+            required: true,
+          },
+          {
+            name: "issueType",
+            description: "Type of issue (deployment, build, functions, performance)",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-function-deploy",
+        description: "Function deployment with best practices",
+        arguments: [
+          {
+            name: "functionPath",
+            description: "Functions directory path",
+            required: true,
+          },
+          {
+            name: "runtime",
+            description: "Function runtime (default: nodejs)",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-migration",
+        description: "Site migration with optimization",
+        arguments: [
+          {
+            name: "sourceType",
+            description: "Source platform (github-pages, vercel, heroku, etc.)",
+            required: true,
+          },
+          {
+            name: "repositoryUrl",
+            description: "Repository URL",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-optimization",
+        description: "Performance, security, and SEO optimization",
+        arguments: [
+          {
+            name: "siteId",
+            description: "Site ID to optimize",
+            required: true,
+          },
+          {
+            name: "focusArea",
+            description: "Optimization focus (performance, security, seo, all)",
+            required: false,
+          },
+        ],
+      },
+      {
+        name: "netlify-security-audit",
+        description: "Complete security audit and hardening",
+        arguments: [
+          {
+            name: "siteId",
+            description: "Site ID to audit",
+            required: true,
+          },
+          {
+            name: "includeHeaders",
+            description: "Include headers analysis (default: true)",
+            required: false,
+          },
+        ],
+      },
+    ],
+  };
+});
+
+// Enhanced prompt handler with comprehensive workflow execution
+server.setRequestHandler(GetPromptRequestSchema, async (request) => {
+  const { name, arguments: args } = request.params;
+
+  switch (name) {
+    case "netlify-deploy": {
+      const path = args?.path as string;
+      const production = Boolean(args?.production);
+      const message = args?.message as string;
+
+      return {
+        description: `Complete deployment workflow for ${path}`,
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please execute a comprehensive deployment workflow for the site at "${path}".
+
+**Deployment Configuration:**
+- **Path:** ${path}
+- **Production:** ${production}
+- **Message:** ${message || "Automated deployment"}
+
+**Deployment Workflow:**
+
+1. **Pre-deployment Validation:**
+   - Verify site directory exists and contains build artifacts
+   - Check for build configuration files (package.json, netlify.toml)
+   - Validate environment variables are properly set
+   - Run pre-deployment security checks
+
+2. **Build Process Verification:**
+   - Check if build process completed successfully
+   - Verify all required files are present in the deployment directory
+   - Validate asset optimization and compression
+   - Check for any build warnings or errors
+
+3. **Deployment Execution:**
+   - Deploy site: netlify_deploy_site with path "${path}", prod: ${production}, message: "${message}"
+   - Monitor deployment progress and logs
+   - Track deployment metrics and performance
+
+4. **Post-deployment Verification:**
+   - Verify site is accessible and functioning correctly
+   - Run automated tests on the deployed site
+   - Check for any deployment errors or warnings
+   - Validate all functions and integrations are working
+
+5. **Performance & Security Validation:**
+   - Run performance analysis on the deployed site
+   - Check security headers and SSL configuration
+   - Validate SEO optimization and meta tags
+   - Monitor for any runtime errors
+
+6. **Monitoring Setup:**
+   - Configure deployment notifications
+   - Set up monitoring alerts for the site
+   - Document deployment details and changes
+   - Create deployment summary report
+
+Please execute this comprehensive deployment workflow and provide detailed feedback at each step.`,
+            },
+          },
+        ],
+      };
+    }
+
+    case "netlify-setup": {
+      const siteName = args?.siteName as string;
+      const buildCommand = args?.buildCommand as string || "npm run build";
+      const publishDir = args?.publishDir as string || "build";
+
+      return {
+        description: `Complete site setup for ${siteName}`,
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please execute a comprehensive site setup workflow for "${siteName}".
+
+**Site Configuration:**
+- **Site Name:** ${siteName}
+- **Build Command:** ${buildCommand}
+- **Publish Directory:** ${publishDir}
+
+**Setup Workflow:**
+
+1. **Initial Site Creation:**
+   - Create new site: netlify_create_site with name "${siteName}"
+   - Link current directory: netlify_link_site
+   - Verify connection and site details
+
+2. **Build Configuration:**
+   - Set build command: "${buildCommand}"
+   - Configure publish directory: "${publishDir}"
+   - Validate build process locally
+
+3. **Environment Setup:**
+   - Set up development environment variables
+   - Configure production environment variables
+   - Set up staging environment if needed
+
+4. **Testing & Validation:**
+   - Run initial test build: netlify_build_site
+   - Deploy preview version for testing
+   - Verify all functionality works correctly
+
+5. **Production Setup:**
+   - Configure production domain settings
+   - Set up SSL certificates
+   - Configure security headers and policies
+
+6. **Monitoring & Maintenance:**
+   - Set up deployment notifications
+   - Configure monitoring and analytics
+   - Document deployment process
+
+Please execute this comprehensive setup workflow and provide detailed feedback at each step.`,
+            },
+          },
+        ],
+      };
+    }
+
+    case "netlify-security-audit": {
+      const siteId = args?.siteId as string;
+      const includeHeaders = Boolean(args?.includeHeaders) || true;
+      
+      return {
+        description: `Security audit for site ${siteId}`,
+        messages: [
+          {
+            role: "user",
+            content: {
+              type: "text",
+              text: `Please perform a comprehensive security audit for site "${siteId}".
+
+**Include Headers Analysis:** ${includeHeaders}
+
+**Security Audit Workflow:**
+
+1. **Initial Security Assessment:**
+   - Get site information: netlify_get_site_info for ${siteId}
+   - Review current security configuration
+   - Analyze access controls and permissions
+   - Document current security posture
+
+2. **Configuration Security Review:**
+   - Audit environment variables and secrets
+   - Review function permissions and scopes
+   - Check build and deploy security settings
+   - Validate authentication configurations
+
+${includeHeaders ? `
+3. **Security Headers Analysis:**
+   - Check Content Security Policy (CSP) headers
+   - Verify HTTPS and HSTS configuration
+   - Analyze X-Frame-Options and X-Content-Type-Options
+   - Review referrer policy and permissions policy
+` : ''}
+
+4. **Access Control Audit:**
+   - Review site access permissions
+   - Check form handling and input validation
+   - Verify function authentication and authorization
+   - Analyze API endpoint security
+
+5. **Data Protection Review:**
+   - Audit sensitive data handling
+   - Check encryption at rest and in transit
+   - Review data retention and deletion policies
+   - Validate privacy and compliance requirements
+
+6. **Vulnerability Assessment:**
+   - Check for known security vulnerabilities
+   - Analyze dependencies for security issues
+   - Test for common web application vulnerabilities
+   - Review third-party integrations and services
+
+7. **Incident Response Preparation:**
+   - Review monitoring and alerting systems
+   - Check backup and recovery procedures
+   - Validate incident response plans
+   - Test security event detection and response
+
+8. **Recommendations and Remediation:**
+   - Provide detailed security recommendations
+   - Implement critical security fixes
+   - Set up ongoing security monitoring
+   - Create security maintenance procedures
+
+Please execute this comprehensive security audit for site "${siteId}" and provide a detailed security report with actionable recommendations.`,
+            },
+          },
+        ],
+      };
+    }
+
+    default:
+      throw new Error(`Unknown prompt: ${name}`);
+  }
+});
+
 // Resource subscription handlers for real-time updates
 server.setRequestHandler(SubscribeRequestSchema, async (request) => {
   const { uri } = request.params;
@@ -864,26 +1672,79 @@ server.setRequestHandler(UnsubscribeRequestSchema, async (request) => {
   }
 });
 
-// Run the server with stdio transport
+// Enhanced server startup with SSE and stdio transport support
 async function main() {
   try {
-    const transport = new StdioServerTransport();
-    await server.connect(transport);
+    // Check for SSE transport mode
+    const useSSE = process.env.MCP_TRANSPORT === 'sse' || process.argv.includes('--sse');
+    const ssePort = parseInt(process.env.MCP_SSE_PORT || '3000');
     
-    console.error(`[${new Date().toISOString()}] Netlify MCP Server (v2.0.0) running on stdio transport`);
+    if (useSSE) {
+      // Initialize enhanced SSE transport
+      enhancedSSETransport = new EnhancedSSETransport({
+        port: ssePort,
+        path: '/mcp',
+        enableWebSocket: true,
+        enableCors: true,
+        maxConnections: 100,
+        heartbeatInterval: 30000,
+        compressionLevel: 6,
+      });
+
+      // Start SSE transport server
+      await enhancedSSETransport.start();
+      await server.connect(enhancedSSETransport);
+      
+      console.error(`[${new Date().toISOString()}] Netlify MCP Server (v2.0.0) running on enhanced SSE transport`);
+      console.error(`[${new Date().toISOString()}] SSE Endpoint: http://localhost:${ssePort}/mcp`);
+      console.error(`[${new Date().toISOString()}] WebSocket Endpoint: ws://localhost:${ssePort}/mcp/ws`);
+      console.error(`[${new Date().toISOString()}] Health Check: http://localhost:${ssePort}/health`);
+      console.error(`[${new Date().toISOString()}] Stats Endpoint: http://localhost:${ssePort}/stats`);
+    } else {
+      // Use stdio transport (default)
+      const transport = new StdioServerTransport();
+      await server.connect(transport);
+      
+      console.error(`[${new Date().toISOString()}] Netlify MCP Server (v2.0.0) running on stdio transport`);
+    }
+    
+    console.error(`[${new Date().toISOString()}] Protocol Version: ${LATEST_PROTOCOL_VERSION}`);
     console.error(`[${new Date().toISOString()}] LAZY LOADING ENABLED: Tools available without authentication, auth validated on execution`);
-    console.error(`[${new Date().toISOString()}] Available tools: 23 Netlify CLI operations`);
+    console.error(`[${new Date().toISOString()}] Available tools: 24 Netlify CLI operations`);
+    console.error(`[${new Date().toISOString()}] Available resources: 12 comprehensive data sources`);
+    console.error(`[${new Date().toISOString()}] Available prompts: 8 workflow templates`);
+    console.error(`[${new Date().toISOString()}] Enhanced features: Analytics, Performance Optimization, Plugin System`);
+    
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Failed to start server:`, error);
     throw error;
   }
 }
 
-// Graceful shutdown
+// Graceful shutdown with enhanced transport cleanup
 process.on('SIGINT', async () => {
-  console.error("Shutting down Netlify MCP Server...");
-  await server.close();
-  process.exit(0);
+  console.error("[Shutdown] Gracefully shutting down Netlify MCP Server...");
+  
+  try {
+    // Cleanup enhancement systems
+    await performanceOptimizer.cleanup();
+    
+    // Close SSE transport if running (this also closes the HTTP server)
+    if (enhancedSSETransport) {
+      await enhancedSSETransport.close();
+      console.error("[Shutdown] Enhanced SSE transport closed");
+    }
+    
+    // Close MCP server
+    await server.close();
+    console.error("[Shutdown] MCP server closed");
+    
+    console.error("[Shutdown] Netlify MCP Server shutdown complete");
+    process.exit(0);
+  } catch (error) {
+    console.error("[Shutdown] Error during shutdown:", error);
+    process.exit(1);
+  }
 });
 
 main().catch((error) => {
