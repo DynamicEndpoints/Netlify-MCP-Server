@@ -496,7 +496,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-env-var",
         description: "Get a specific environment variable",
-        inputSchema: GetEnvVarSchema,
+        inputSchema: zodToJsonSchema(GetEnvVarSchema),
         annotations: {
           title: "Get Environment Variable",
           readOnlyHint: true,
@@ -508,7 +508,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "unset-env-var",
         description: "Unset an environment variable",
-        inputSchema: UnsetEnvVarSchema,
+        inputSchema: zodToJsonSchema(UnsetEnvVarSchema),
         annotations: {
           title: "Unset Environment Variable",
           readOnlyHint: false,
@@ -520,7 +520,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "clone-env-vars",
         description: "Clone environment variables between sites",
-        inputSchema: CloneEnvVarsSchema,
+        inputSchema: zodToJsonSchema(CloneEnvVarsSchema),
         annotations: {
           title: "Clone Environment Variables",
           readOnlyHint: false,
@@ -532,7 +532,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "create-site",
         description: "Create a new Netlify site",
-        inputSchema: CreateSiteSchema,
+        inputSchema: zodToJsonSchema(CreateSiteSchema),
         annotations: {
           title: "Create Site",
           readOnlyHint: false,
@@ -544,7 +544,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-site-info",
         description: "Get detailed information about a site",
-        inputSchema: GetSiteInfoSchema,
+        inputSchema: zodToJsonSchema(GetSiteInfoSchema),
         annotations: {
           title: "Get Site Information",
           readOnlyHint: true,
@@ -556,7 +556,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "list-deploys",
         description: "List deploys for a site",
-        inputSchema: ListDeploysSchema,
+        inputSchema: zodToJsonSchema(ListDeploysSchema),
         annotations: {
           title: "List Deploys",
           readOnlyHint: true,
@@ -568,7 +568,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-deploy-info",
         description: "Get information about a specific deploy",
-        inputSchema: GetDeployInfoSchema,
+        inputSchema: zodToJsonSchema(GetDeployInfoSchema),
         annotations: {
           title: "Get Deploy Information",
           readOnlyHint: true,
@@ -580,7 +580,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "cancel-deploy",
         description: "Cancel a running deploy",
-        inputSchema: CancelDeploySchema,
+        inputSchema: zodToJsonSchema(CancelDeploySchema),
         annotations: {
           title: "Cancel Deploy",
           readOnlyHint: false,
@@ -592,7 +592,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "restore-deploy",
         description: "Restore a previous deploy",
-        inputSchema: RestoreDeploySchema,
+        inputSchema: zodToJsonSchema(RestoreDeploySchema),
         annotations: {
           title: "Restore Deploy",
           readOnlyHint: false,
@@ -604,7 +604,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "list-functions",
         description: "List all functions for a site",
-        inputSchema: ListFunctionsSchema,
+        inputSchema: zodToJsonSchema(ListFunctionsSchema),
         annotations: {
           title: "List Functions",
           readOnlyHint: true,
@@ -616,7 +616,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-form-submissions",
         description: "Get form submissions for a site",
-        inputSchema: GetFormSubmissionsSchema,
+        inputSchema: zodToJsonSchema(GetFormSubmissionsSchema),
         annotations: {
           title: "Get Form Submissions",
           readOnlyHint: true,
@@ -628,7 +628,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "enable-branch-deploy",
         description: "Enable branch deploys for a specific branch",
-        inputSchema: EnableBranchDeploySchema,
+        inputSchema: zodToJsonSchema(EnableBranchDeploySchema),
         annotations: {
           title: "Enable Branch Deploy",
           readOnlyHint: false,
@@ -640,7 +640,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "disable-branch-deploy",
         description: "Disable branch deploys for a specific branch",
-        inputSchema: DisableBranchDeploySchema,
+        inputSchema: zodToJsonSchema(DisableBranchDeploySchema),
         annotations: {
           title: "Disable Branch Deploy",
           readOnlyHint: false,
