@@ -1,5 +1,11 @@
 # Smithery configuration file: https://smithery.ai/docs/config#smitheryyaml
 
+# Basic server configuration
+name: netlify-mcp-server
+description: "A comprehensive Model Context Protocol (MCP) server for Netlify operations with lazy loading and advanced features"
+version: "2.0.0"
+
+# Server startup configuration
 startCommand:
   type: stdio
   configSchema:
@@ -9,10 +15,12 @@ startCommand:
     properties:
       NETLIFY_AUTH_TOKEN:
         type: string
-        description: "Netlify Personal Access Token for authentication"
+        description: "Netlify Personal Access Token for authentication. Get one from: https://app.netlify.com/user/applications#personal-access-tokens"
+        title: "Netlify Auth Token"
       NETLIFY_SITE_ID:
         type: string
         description: "Default site ID for operations (optional)"
+        title: "Default Site ID"
   commandFunction: |
     (config) => ({
       command: 'node',
@@ -23,3 +31,28 @@ startCommand:
         ...(config.NETLIFY_SITE_ID && { NETLIFY_SITE_ID: config.NETLIFY_SITE_ID })
       }
     })
+
+# Server capabilities and features
+capabilities:
+  tools: true
+  resources: true
+  prompts: true
+  lazy_loading: true
+  authentication: "optional"
+
+# Categories for Smithery marketplace
+categories:
+  - "deployment"
+  - "serverless"
+  - "hosting"
+  - "development"
+
+# Keywords for discovery
+keywords:
+  - "netlify"
+  - "deployment"
+  - "serverless"
+  - "hosting"
+  - "cli"
+  - "build"
+  - "functions"

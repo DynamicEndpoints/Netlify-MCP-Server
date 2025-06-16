@@ -18,6 +18,7 @@ import {
   CursorSchema,
 } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
+import { zodToJsonSchema } from "zod-to-json-schema";
 import { execSync } from "child_process";
 import { EventEmitter } from "events";
 import { createServer, IncomingMessage, ServerResponse } from "http";
@@ -363,7 +364,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "deploy-site",
         description: "Deploy a site to Netlify with comprehensive validation and monitoring",
-        inputSchema: DeploySiteSchema,
+        inputSchema: zodToJsonSchema(DeploySiteSchema),
         annotations: {
           title: "Deploy Site",
           readOnlyHint: false,
@@ -375,7 +376,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "list-sites",
         description: "List all sites in your Netlify account",
-        inputSchema: ListSitesSchema,
+        inputSchema: zodToJsonSchema(ListSitesSchema),
         annotations: {
           title: "List Sites",
           readOnlyHint: true,
@@ -387,7 +388,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "set-env-vars",
         description: "Set environment variables for a specific site",
-        inputSchema: SetEnvVarsSchema,
+        inputSchema: zodToJsonSchema(SetEnvVarsSchema),
         annotations: {
           title: "Set Environment Variables",
           readOnlyHint: false,
@@ -399,7 +400,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "delete-site",
         description: "Delete a site from Netlify (irreversible operation)",
-        inputSchema: DeleteSiteSchema,
+        inputSchema: zodToJsonSchema(DeleteSiteSchema),
         annotations: {
           title: "Delete Site",
           readOnlyHint: false,
@@ -411,7 +412,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-logs",
         description: "Get function logs for a site",
-        inputSchema: GetLogsSchema,
+        inputSchema: zodToJsonSchema(GetLogsSchema),
         annotations: {
           title: "Get Logs",
           readOnlyHint: true,
@@ -423,7 +424,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "trigger-build",
         description: "Trigger a new build and deploy",
-        inputSchema: TriggerBuildSchema,
+        inputSchema: zodToJsonSchema(TriggerBuildSchema),
         annotations: {
           title: "Trigger Build",
           readOnlyHint: false,
@@ -435,7 +436,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "link-site",
         description: "Link current directory to a Netlify site",
-        inputSchema: LinkSiteSchema,
+        inputSchema: zodToJsonSchema(LinkSiteSchema),
         annotations: {
           title: "Link Site",
           readOnlyHint: false,
@@ -447,7 +448,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "unlink-site",
         description: "Unlink current directory from Netlify site",
-        inputSchema: UnlinkSiteSchema,
+        inputSchema: zodToJsonSchema(UnlinkSiteSchema),
         annotations: {
           title: "Unlink Site",
           readOnlyHint: false,
@@ -459,7 +460,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "get-status",
         description: "Get current Netlify status",
-        inputSchema: GetStatusSchema,
+        inputSchema: zodToJsonSchema(GetStatusSchema),
         annotations: {
           title: "Get Status",
           readOnlyHint: true,
@@ -471,7 +472,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "import-env",
         description: "Import environment variables from file",
-        inputSchema: ImportEnvSchema,
+        inputSchema: zodToJsonSchema(ImportEnvSchema),
         annotations: {
           title: "Import Environment Variables",
           readOnlyHint: false,
@@ -483,7 +484,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
       {
         name: "build-site",
         description: "Build site locally",
-        inputSchema: BuildSiteSchema,
+        inputSchema: zodToJsonSchema(BuildSiteSchema),
         annotations: {
           title: "Build Site",
           readOnlyHint: false,
