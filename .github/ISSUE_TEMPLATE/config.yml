@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/owner/Netlify-MCP-Server/blob/main/README.md
+    about: Check the README for setup instructions and usage examples
+  - name: 💬 Discussions
+    url: https://github.com/owner/Netlify-MCP-Server/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔧 Netlify Support
+    url: https://answers.netlify.com/
+    about: For Netlify-specific issues, check their official support
+  - name: 🤖 MCP Documentation
+    url: https://modelcontextprotocol.io/
+    about: Learn about the Model Context Protocol specification
+  - name: ⚡ Quick Start Guide
+    url: https://github.com/owner/Netlify-MCP-Server/blob/main/QUICK_START.md
+    about: Get up and running quickly with pre-configured examples

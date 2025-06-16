@@ -1,0 +1,114 @@
+name: 📚 Documentation Improvement
+description: Suggest improvements to documentation, examples, or guides
+title: "[DOCS] "
+labels: ["documentation", "improvement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Help us improve our documentation! Clear documentation is especially important for AI coding assistants.
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: Documentation Type
+      description: What type of documentation needs improvement?
+      options:
+        - README.md
+        - API Reference
+        - Setup Guide
+        - Usage Examples
+        - Troubleshooting
+        - Tool Documentation
+        - Code Comments
+        - Error Messages
+        - Configuration Guide
+        - Best Practices
+        - AI/Copilot Guide
+    validations:
+      required: true
+
+  - type: textarea
+    id: current_issue
+    attributes:
+      label: Current Documentation Issue
+      description: What's wrong or missing in the current documentation?
+      placeholder: |
+        **Problem:** The setup guide doesn't explain how to configure for multiple Netlify accounts
+        **Impact:** Users get confused about authentication when working with team accounts
+        **Missing Information:** Examples of team account configuration
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested_improvement
+    attributes:
+      label: Suggested Improvement
+      description: How should the documentation be improved?
+      placeholder: |
+        **Suggestion:** Add a section "Working with Team Accounts" to the README
+        **Content to Include:**
+        - How to get team account slugs
+        - Configuration examples for multiple accounts
+        - Environment variable patterns
+        - Troubleshooting common team account issues
+    validations:
+      required: true
+
+  - type: textarea
+    id: target_audience
+    attributes:
+      label: Target Audience
+      description: Who would benefit from this improvement?
+      options:
+        - New users setting up for the first time
+        - Developers integrating with CI/CD
+        - Team administrators managing multiple accounts
+        - AI/Copilot users needing clear examples
+        - Troubleshooting specific issues
+        - Advanced users optimizing performance
+
+  - type: textarea
+    id: examples_needed
+    attributes:
+      label: Examples or Code Samples
+      description: What examples would be helpful?
+      placeholder: |
+        ```json
+        // Example: Multi-account configuration
+        {
+          "mcpServers": {
+            "netlify-client1": {
+              "command": "node",
+              "args": ["./build/index.js"],
+              "env": {
+                "NETLIFY_AUTH_TOKEN": "client1-token",
+                "DEFAULT_ACCOUNT_SLUG": "client1-team"
+              }
+            },
+            "netlify-client2": {
+              "command": "node", 
+              "args": ["./build/index.js"],
+              "env": {
+                "NETLIFY_AUTH_TOKEN": "client2-token",
+                "DEFAULT_ACCOUNT_SLUG": "client2-team"
+              }
+            }
+          }
+        }
+        ```
+
+  - type: checkboxes
+    id: ai_considerations
+    attributes:
+      label: AI/Copilot Considerations
+      description: Special requirements for AI assistants
+      options:
+        - label: Include structured examples that AI can easily parse
+        - label: Add clear parameter descriptions with types
+        - label: Provide troubleshooting decision trees
+        - label: Include common error messages and solutions
+        - label: Add validation examples for input parameters
+        - label: Structure content for easy AI extraction
+        - label: Include performance and rate limiting guidance

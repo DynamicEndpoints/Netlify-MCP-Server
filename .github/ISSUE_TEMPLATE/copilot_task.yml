@@ -1,0 +1,337 @@
+name: 🤖 Copilot Task
+description: Task template optimized for AI coding assistants and automated workflows
+title: "[COPILOT] "
+labels: ["copilot", "automation", "needs-analysis"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Copilot Task Template** 
+        
+        This template is designed for AI coding assistants to request changes, report issues, or suggest improvements. 
+        Provide clear, structured information that enables efficient automated processing.
+
+  - type: dropdown
+    id: task_type
+    attributes:
+      label: Task Type
+      description: What type of task is this?
+      options:
+        - Code Generation
+        - Bug Fix
+        - Refactoring
+        - Testing
+        - Documentation
+        - Performance Optimization
+        - Security Enhancement
+        - Dependency Update
+        - Integration
+        - Analysis Request
+    validations:
+      required: true
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency Level
+      description: How urgent is this task?
+      options:
+        - Low - Can be scheduled for next sprint
+        - Medium - Should be addressed within a week
+        - High - Needs attention within 24-48 hours
+        - Critical - Blocking production/development
+    validations:
+      required: true
+
+  - type: textarea
+    id: objective
+    attributes:
+      label: Clear Objective
+      description: Specific, measurable goal for this task
+      placeholder: |
+        **Goal:** Implement error retry mechanism for failed Netlify CLI commands
+        **Success Criteria:** 
+        - Commands retry up to 3 times on transient failures
+        - Exponential backoff between retries (1s, 2s, 4s)
+        - Permanent failures (auth errors) don't retry
+        - All existing tests pass
+        - New tests cover retry scenarios
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope Definition
+      description: Exact boundaries of what should and shouldn't be changed
+      placeholder: |
+        **In Scope:**
+        - Modify `executeNetlifyCommand` function in src/index.ts
+        - Add retry logic with configurable attempts
+        - Add exponential backoff timing
+        - Update error handling to distinguish retry-able vs permanent errors
+        - Add unit tests for retry scenarios
+        
+        **Out of Scope:**
+        - Changes to tool signatures or parameters
+        - Modifications to CLI command arguments
+        - UI/UX changes in client applications
+        - Breaking changes to existing API
+    validations:
+      required: true
+
+  - type: textarea
+    id: technical_requirements
+    attributes:
+      label: Technical Requirements
+      description: Specific technical constraints and requirements
+      placeholder: |
+        **Code Requirements:**
+        - Use existing error handling patterns
+        - Maintain TypeScript strict mode compliance
+        - Follow existing code style and formatting
+        - No new external dependencies unless justified
+        
+        **Performance Requirements:**
+        - Total retry time should not exceed 30 seconds
+        - Memory usage should not increase significantly
+        - Should not affect non-failing commands
+        
+        **Compatibility Requirements:**
+        - Must work with Netlify CLI v22.1.3+
+        - Compatible with Node.js 18+
+        - No breaking changes to existing tool interfaces
+      render: markdown
+
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Acceptance Criteria
+      description: Specific, testable conditions that must be met
+      placeholder: |
+        - [ ] Commands that fail with network errors retry automatically
+        - [ ] Authentication errors (401, 403) do not trigger retries
+        - [ ] Maximum of 3 retry attempts per command
+        - [ ] Exponential backoff: 1s, 2s, 4s between attempts
+        - [ ] Original error is preserved and reported after all retries fail
+        - [ ] Retry behavior can be disabled via environment variable
+        - [ ] All existing unit tests continue to pass
+        - [ ] New tests cover retry success and failure scenarios
+        - [ ] Documentation updated with retry behavior explanation
+        - [ ] TypeScript compilation produces no errors or warnings
+    validations:
+      required: true
+
+  - type: textarea
+    id: file_locations
+    attributes:
+      label: Target Files/Functions
+      description: Specific files, functions, or code sections to modify
+      placeholder: |
+        **Primary Files:**
+        - `src/index.ts` - Function `executeNetlifyCommand()` (lines ~15-35)
+        
+        **Secondary Files:**
+        - `package.json` - Add retry-related dependencies if needed
+        - `README.md` - Document retry behavior
+        - `src/types.ts` - Add retry configuration types (if creating)
+        
+        **Test Files:**
+        - `tests/executeCommand.test.ts` - Add retry test cases
+        - `tests/integration.test.ts` - Verify end-to-end retry behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: code_patterns
+    attributes:
+      label: Expected Code Patterns
+      description: Specific coding patterns, interfaces, or structures to use
+      placeholder: |
+        ```typescript
+        interface RetryConfig {
+          maxAttempts: number;
+          baseDelay: number;
+          maxDelay: number;
+          retryableErrors: string[];
+        }
+        
+        async function executeNetlifyCommandWithRetry(
+          command: string, 
+          siteId?: string,
+          retryConfig?: RetryConfig
+        ): Promise<string> {
+          // Implementation with retry logic
+        }
+        
+        // Error classification
+        function isRetryableError(error: Error): boolean {
+          // Logic to determine if error should trigger retry
+        }
+        ```
+      render: typescript
+
+  - type: textarea
+    id: test_cases
+    attributes:
+      label: Required Test Cases
+      description: Specific test scenarios that must be covered
+      placeholder: |
+        **Unit Tests:**
+        1. Successful command on first attempt
+        2. Successful command on second attempt after one failure
+        3. Command fails permanently after max retries
+        4. Non-retryable error fails immediately
+        5. Retry disabled via environment variable
+        
+        **Integration Tests:**
+        1. Deploy command with network timeout
+        2. Site list with intermittent API errors
+        3. Environment variable set with rate limiting
+        
+        **Edge Cases:**
+        1. Zero retry attempts configured
+        2. Invalid retry configuration
+        3. Command that takes longer than retry timeout
+      render: markdown
+
+  - type: textarea
+    id: error_scenarios
+    attributes:
+      label: Error Scenarios to Handle
+      description: Specific error conditions the solution must address
+      placeholder: |
+        **Retryable Errors:**
+        - Network timeouts (ETIMEDOUT, ENOTFOUND)
+        - HTTP 5xx server errors
+        - Rate limiting (HTTP 429)
+        - Temporary API unavailability
+        
+        **Non-Retryable Errors:**
+        - Authentication failures (HTTP 401, 403)
+        - Invalid parameters (HTTP 400)
+        - Resource not found (HTTP 404)
+        - CLI command not found
+        
+        **Edge Cases:**
+        - Command killed by signal
+        - Out of memory errors
+        - File system permission errors
+      render: markdown
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and Constraints
+      description: External dependencies, limitations, or blockers
+      placeholder: |
+        **Required Before Starting:**
+        - Latest MCP SDK documentation review
+        - Netlify CLI error code analysis
+        - Current test suite must be passing
+        
+        **Dependencies:**
+        - No new npm dependencies preferred
+        - If dependencies needed, must be widely used and maintained
+        - Should not conflict with existing dependencies
+        
+        **Constraints:**
+        - Changes must be backwards compatible
+        - Cannot increase bundle size significantly
+        - Must work in both development and production environments
+
+  - type: textarea
+    id: validation_steps
+    attributes:
+      label: Validation Steps
+      description: How to verify the implementation is correct
+      placeholder: |
+        **Automated Validation:**
+        1. Run `npm test` - all tests pass
+        2. Run `npm run build` - clean TypeScript compilation
+        3. Run `npm run lint` - no linting errors
+        
+        **Manual Validation:**
+        1. Test with intentionally failing network connection
+        2. Test with invalid Netlify credentials
+        3. Test with rate-limited API calls
+        4. Verify retry behavior with debug logging
+        
+        **Performance Validation:**
+        1. Measure impact on successful command execution time
+        2. Verify memory usage doesn't increase during retries
+        3. Test with concurrent commands to ensure no race conditions
+
+  - type: textarea
+    id: implementation_hints
+    attributes:
+      label: Implementation Hints
+      description: Specific guidance for implementation approach
+      placeholder: |
+        **Suggested Approach:**
+        1. Extract current `execSync` logic into separate function
+        2. Wrap with retry mechanism using async/await
+        3. Implement exponential backoff with jitter
+        4. Add comprehensive error classification
+        5. Preserve original error context for debugging
+        
+        **Code Style:**
+        - Follow existing TypeScript patterns in the file
+        - Use descriptive variable names
+        - Add JSDoc comments for public functions
+        - Keep functions focused and testable
+        
+        **Testing Strategy:**
+        - Mock `execSync` for unit tests
+        - Use test timeouts to verify retry timing
+        - Test both success and failure paths
+
+  - type: checkboxes
+    id: deliverables
+    attributes:
+      label: Expected Deliverables
+      description: What should be delivered upon completion
+      options:
+        - label: Modified source code with retry implementation
+        - label: Comprehensive unit tests covering all scenarios
+        - label: Integration tests demonstrating end-to-end functionality
+        - label: Updated documentation explaining retry behavior
+        - label: Configuration options for retry parameters
+        - label: Debug logging for retry attempts
+        - label: Performance benchmarks showing minimal impact
+        - label: Migration guide if breaking changes required
+
+  - type: textarea
+    id: context_links
+    attributes:
+      label: Context and References
+      description: Links to relevant documentation, issues, or code
+      placeholder: |
+        **Related Issues:**
+        - #123 - Users report intermittent deployment failures
+        - #456 - Need better error handling for network issues
+        
+        **Documentation:**
+        - [Netlify CLI Error Codes](https://cli.netlify.com/commands)
+        - [Node.js Error Handling Best Practices](https://nodejs.org/api/errors.html)
+        
+        **Code References:**
+        - Current `executeNetlifyCommand` implementation: src/index.ts:15-35
+        - Error handling patterns: src/errorHandler.ts
+        - Similar retry implementations in other projects
+
+  - type: checkboxes
+    id: ai_optimization
+    attributes:
+      label: AI/Copilot Optimization
+      description: Requirements for AI-friendly implementation
+      options:
+        - label: Code should be self-documenting with clear variable names
+        - label: Include comprehensive JSDoc comments for AI understanding
+        - label: Use consistent error handling patterns throughout
+        - label: Provide clear success/failure indicators in outputs
+        - label: Maintain predictable function signatures
+        - label: Include inline comments explaining complex logic
+        - label: Use TypeScript types extensively for better AI analysis
+        - label: Follow established project conventions and patterns

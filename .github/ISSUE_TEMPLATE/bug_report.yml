@@ -1,0 +1,210 @@
+name: 🐛 Bug Report
+description: Report a bug to help us improve the Netlify MCP Server
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug! Please provide detailed information to help us resolve the issue quickly.
+        
+        **For Copilot Users:** Include specific error messages, tool names, and parameter values that caused the issue.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please confirm you have completed these steps before submitting
+      options:
+        - label: I have searched existing issues to avoid duplicates
+          required: true
+        - label: I have updated to the latest version of the MCP server
+          required: true
+        - label: I have verified my Netlify CLI authentication is working
+          required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Bug Summary
+      description: A clear and concise description of what the bug is
+      placeholder: "The deploy-site tool fails when..."
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      description: Which part of the server is affected?
+      options:
+        - Tool execution
+        - Resource loading
+        - Authentication
+        - Environment variables
+        - Deployment
+        - Site management
+        - Function logs
+        - Prompt handling
+        - CLI integration
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: tool_name
+    attributes:
+      label: Affected Tool/Resource
+      description: Which specific tool, resource, or prompt is causing the issue?
+      placeholder: "e.g., deploy-site, netlify://sites/{siteId}/env, netlify-deploy"
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Detailed steps to reproduce the bug
+      placeholder: |
+        1. Call tool with parameters: `{"path": "./dist", "prod": true}`
+        2. Observe error message: "..."
+        3. Expected: successful deployment
+        4. Actual: error occurred
+      value: |
+        1. 
+        2. 
+        3. 
+        4. 
+    validations:
+      required: true
+
+  - type: textarea
+    id: parameters
+    attributes:
+      label: Tool Parameters (if applicable)
+      description: The exact parameters passed to the tool
+      placeholder: |
+        ```json
+        {
+          "siteId": "example-site-id",
+          "path": "./dist",
+          "prod": true
+        }
+        ```
+      render: json
+
+  - type: textarea
+    id: error_output
+    attributes:
+      label: Error Message/Output
+      description: Complete error message or unexpected output
+      placeholder: |
+        ```
+        Error: Netlify CLI error: Site not found
+        at executeNetlifyCommand (/path/to/server/index.js:45:11)
+        ```
+      render: shell
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What you expected to happen
+      placeholder: "The site should deploy successfully and return deployment URL"
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happened
+      placeholder: "The deployment failed with authentication error"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Technical environment information
+      value: |
+        **MCP Server Version:** (e.g., 2.0.0)
+        **MCP SDK Version:** (e.g., 1.12.3)
+        **Netlify CLI Version:** (run `netlify --version`)
+        **Node.js Version:** (run `node --version`)
+        **Operating System:** (e.g., Windows 11, macOS 14, Ubuntu 22.04)
+        **MCP Client:** (e.g., Claude Desktop, Custom Client)
+        **Shell:** (e.g., PowerShell, bash, zsh)
+    validations:
+      required: true
+
+  - type: textarea
+    id: netlify_config
+    attributes:
+      label: Netlify Configuration
+      description: Relevant Netlify-specific configuration (remove sensitive data)
+      placeholder: |
+        **Site ID:** (if applicable, obfuscated: abc***xyz)
+        **Account Type:** (Personal/Team)
+        **Authentication Method:** (Personal Access Token/CLI Login)
+        **Site Status:** (Active/Inactive)
+        **Functions:** (Yes/No)
+        **Build Settings:** (if relevant)
+
+  - type: textarea
+    id: mcp_config
+    attributes:
+      label: MCP Configuration
+      description: Your MCP client configuration (remove sensitive tokens)
+      placeholder: |
+        ```json
+        {
+          "mcpServers": {
+            "netlify": {
+              "command": "node",
+              "args": ["C:\\path\\to\\build\\index.js"],
+              "env": {
+                "NETLIFY_AUTH_TOKEN": "[REDACTED]"
+              }
+            }
+          }
+        }
+        ```
+      render: json
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Debug Logs
+      description: Any relevant debug output or server logs (set DEBUG=true if available)
+      placeholder: |
+        ```
+        [2025-06-15 20:30:15] Executing: netlify deploy --dir="./dist" --prod
+        [2025-06-15 20:30:16] Error: Authentication required
+        ```
+      render: shell
+
+  - type: textarea
+    id: workaround
+    attributes:
+      label: Workaround (if any)
+      description: Any temporary solution you found
+      placeholder: "Using CLI directly works: `netlify deploy --dir=./dist --prod`"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any other relevant information
+      placeholder: "This started happening after updating from v1.x to v2.0"
+
+  - type: checkboxes
+    id: copilot_info
+    attributes:
+      label: For Copilot Users
+      description: Additional information for AI coding assistants
+      options:
+        - label: This issue is blocking my development workflow
+        - label: I need this fixed to continue with automated deployments
+        - label: This affects multiple tools/resources
+        - label: I can provide additional test cases if needed

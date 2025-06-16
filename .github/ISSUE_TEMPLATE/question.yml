@@ -1,0 +1,103 @@
+name: ❓ Question / Discussion
+description: Ask a question or start a discussion about the Netlify MCP Server
+title: "[QUESTION] "
+labels: ["question", "needs-response"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for your question! This template helps ensure you get the best possible answer.
+        
+        **For Copilot Users:** Include specific context about your use case and any automation requirements.
+
+  - type: checkboxes
+    id: prerequisites
+    attributes:
+      label: Prerequisites
+      description: Please check these before asking
+      options:
+        - label: I have read the README.md documentation
+        - label: I have searched existing issues and discussions
+        - label: I have checked the Netlify CLI documentation
+        - label: This is not a bug report (use the Bug Report template instead)
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Question Category
+      description: What type of question is this?
+      options:
+        - Setup and Configuration
+        - Tool Usage
+        - Authentication
+        - Deployment Issues
+        - Environment Variables
+        - Function Logs
+        - Performance
+        - Integration with Other Tools
+        - Best Practices
+        - Copilot/AI Usage
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Your Question
+      description: What would you like to know?
+      placeholder: "How do I configure the server to work with multiple Netlify accounts?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and Background
+      description: What are you trying to accomplish?
+      placeholder: |
+        **Goal:** I want to deploy to different Netlify accounts based on the environment
+        **Current Setup:** Single account configuration
+        **Challenge:** Need to switch between accounts automatically
+        **Use Case:** CI/CD pipeline for multiple clients
+
+  - type: textarea
+    id: current_approach
+    attributes:
+      label: What Have You Tried?
+      description: What approaches have you already attempted?
+      placeholder: |
+        1. Tried setting different NETLIFY_AUTH_TOKEN values
+        2. Looked at environment variable configuration
+        3. Searched for multi-account examples in documentation
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Information
+      description: Your current setup (if relevant)
+      placeholder: |
+        **MCP Server Version:** 2.0.0
+        **MCP Client:** Claude Desktop
+        **Operating System:** Windows 11
+        **Node.js Version:** 18.17.0
+        **Netlify CLI Version:** 22.1.3
+
+  - type: textarea
+    id: expected_outcome
+    attributes:
+      label: Expected Outcome
+      description: What would you like to achieve?
+      placeholder: "I expect to be able to deploy to different accounts by specifying an account parameter or environment variable"
+
+  - type: textarea
+    id: copilot_context
+    attributes:
+      label: AI/Copilot Context (if applicable)
+      description: Additional context for AI assistants
+      placeholder: |
+        **Automation Level:** Fully automated deployments
+        **AI Tools Used:** GitHub Copilot, Claude Desktop
+        **Frequency:** Multiple deployments per day
+        **Error Tolerance:** Must be highly reliable

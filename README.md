@@ -1,27 +1,97 @@
-# Netlify MCP Server
+# Netlify MCP Server v2.0.0
 
 [![smithery badge](https://smithery.ai/badge/@DynamicEndpoints/Netlify-MCP-Server)](https://smithery.ai/server/@DynamicEndpoints/Netlify-MCP-Server)
 
-A Model Context Protocol (MCP) server that provides tools and resources for interacting with Netlify through their CLI. This server enables deploying sites, managing environment variables, builds, and more, compatible with Netlify CLI v19.1.5.
+A Model Context Protocol (MCP) server for Netlify, providing comprehensive access to Netlify's features through the latest MCP SDK v1.12.3 and Netlify CLI v22.1.3.
 
 <a href="https://glama.ai/mcp/servers/rmzusviqom">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/rmzusviqom/badge" alt="Netlify Server MCP server" />
 </a>
 
-## Recent Changes (April 8, 2025)
+## 🚀 Latest Updates (v2.0.0 - June 2025)
 
-*   **Compatibility Update:** Verified tool compatibility with Netlify CLI v19.1.5.
-*   **Removed Unsupported Tools/Resources:** Removed functionality related to unavailable CLI command groups: `dns`, `forms`, `plugins`, `hooks`, `deploys`. Specific commands like `functions:delete`, `functions:invoke`, and `sites:get` were also removed as they were either unavailable or incompatible with non-interactive use via the MCP server.
-*   **Site Context Workaround:** Updated tools requiring site context (like `env:*`, `logs:function`, `build`, `trigger-build`) to pass the `siteId` via the `NETLIFY_SITE_ID` environment variable, as the `--site` flag is not supported for these commands in this CLI version.
+- **Updated to MCP SDK v1.12.3** - Latest SDK with improved performance and new capabilities
+- **Netlify CLI v22.1.3** - Latest Netlify CLI with new features and bug fixes
+- **Enhanced API Coverage** - New tools for deploys, forms, functions, and site management
+- **Improved Resource System** - Better resource handling with JSON output
+- **Smart Prompts** - Pre-built prompts for common Netlify workflows
+- **Better Error Handling** - More robust error reporting and recovery
+- **Modern TypeScript Configuration** - Updated to latest TypeScript best practices
 
-## Features (Compatible with Netlify CLI v19.1.5)
+## ✨ Enhanced Features (NEW!)
 
-*   Deploy and manage sites (`deploy-site`, `build-site`, `trigger-build`, `link-site`, `unlink-site`, `get-status`, `create-site`, `delete-site`)
-*   Manage environment variables (`set-env-vars`, `get-env-var`, `unset-env-var`, `import-env`, `clone-env-vars`)
-*   Get function logs (`get-logs`)
-*   Access site data via Resources (`list-sites`, `list-functions`, `list-env-vars`)
-*   Comprehensive error handling
-*   Type-safe parameter validation using Zod
+### 🎯 AI-Optimized Workflow Prompts
+8 comprehensive workflow templates designed specifically for AI coding agents:
+- **`netlify-deploy`** - Complete deployment with validation and monitoring
+- **`netlify-setup`** - Full site setup from creation to production
+- **`netlify-environment-setup`** - Environment configuration across contexts
+- **`netlify-troubleshoot`** - Comprehensive issue diagnosis and resolution
+- **`netlify-function-deploy`** - Function deployment with best practices
+- **`netlify-migration`** - Site migration with optimization
+- **`netlify-optimization`** - Performance, security, and SEO optimization
+- **`netlify-security-audit`** - Complete security audit and hardening
+
+### 📊 Comprehensive Resources with Real-time Subscriptions
+12 enhanced data sources with live updates:
+- **Site Resources**: Overview, functions, environment variables, deploys, forms, analytics, logs
+- **Account Resources**: Usage statistics, team information, service status
+- **Real-time Features**: Live subscriptions, automatic cache invalidation, event notifications
+
+### 🔄 Advanced Subscription System
+- Subscribe to any resource URI for real-time updates
+- Automatic cache management with intelligent refresh
+- Targeted notifications based on change types
+- Retry logic for failed notifications
+
+## Features
+
+### 🛠️ Tools (23 Available)
+
+#### Core Deployment
+- `deploy-site` - Deploy a site to Netlify (production or preview)
+- `trigger-build` - Trigger a new build and deploy
+- `build-site` - Build site locally with context options
+
+#### Site Management
+- `list-sites` - List all Netlify sites
+- `create-site` - Create a new Netlify site
+- `delete-site` - Delete a Netlify site
+- `get-site-info` - Get detailed site information
+- `link-site` - Link current directory to a Netlify site
+- `unlink-site` - Unlink current directory from Netlify site
+- `get-status` - Get current Netlify status
+
+#### Environment Variables
+- `set-env-vars` - Set environment variables for a site
+- `get-env-var` - Get a specific environment variable
+- `unset-env-var` - Unset an environment variable
+- `clone-env-vars` - Clone environment variables between sites
+- `import-env` - Import environment variables from file
+
+#### Deployments & History
+- `list-deploys` - List deploys for a site
+- `get-deploy-info` - Get information about a specific deploy
+- `cancel-deploy` - Cancel a running deploy
+- `restore-deploy` - Restore a previous deploy
+
+#### Functions & Features
+- `list-functions` - List all functions for a site
+- `get-logs` - Get function logs for a site
+- `get-form-submissions` - Get form submissions for a site
+- `enable-branch-deploy` - Enable branch deploys for a specific branch
+- `disable-branch-deploy` - Disable branch deploys for a specific branch
+
+### 📋 Resources
+
+- `netlify://sites` - List all sites (JSON)
+- `netlify://sites/{siteId}/functions` - List site functions (JSON)
+- `netlify://sites/{siteId}/env` - List environment variables (JSON)
+- `netlify://sites/{siteId}/deploys` - List site deployments (JSON)
+
+### 💡 Smart Prompts
+
+- `netlify-deploy` - Deploy a site with best practices guidance
+- `netlify-setup` - Set up a new Netlify site with configuration
 
 ## Installation
 
@@ -35,46 +105,53 @@ npx -y @smithery/cli install @DynamicEndpoints/Netlify-MCP-Server --client claud
 
 ### Manual Installation
 
-1.  Clone the repository (if not already done).
-2.  Install dependencies:
-    ```bash
-    npm install
-    ```
-3.  Build the server:
-    ```bash
-    npm run build
-    ```
-4.  Ensure Netlify CLI is installed (v19.1.5 or compatible):
-    ```bash
-    # Example global install:
-    npm install -g netlify-cli@19.1.5
-    ```
+1. Clone this repository:
+```bash
+git clone <repository-url>
+cd Netlify-MCP-Server
+```
+
+2. Install dependencies:
+```bash
+npm install
+```
+
+3. Build the project:
+```bash
+npm run build
+```
+
+4. Ensure Netlify CLI is installed (latest version):
+```bash
+npm install -g netlify-cli@latest
+```
 
 ## Authentication
 
 This MCP server interacts with the Netlify CLI, which requires authentication with your Netlify account. Since the server runs non-interactively, **you must use a Personal Access Token (PAT)**.
 
-1.  **Generate a PAT:**
-    *   Go to your Netlify User Settings > Applications > Personal access tokens ([Direct Link](https://app.netlify.com/user/applications#personal-access-tokens)).
-    *   Select **New access token**.
-    *   Give it a description (e.g., "MCP Server Token").
-    *   Set an expiration date.
-    *   Select **Generate token**.
-    *   **Copy the token immediately** and store it securely.
-2.  **Configure the Token:** You need to make this token available to the MCP server as the `NETLIFY_AUTH_TOKEN` environment variable. Add it to the `env` section of the server's configuration in your MCP settings file (see below).
+1. **Generate a PAT:**
+   - Go to your Netlify User Settings > Applications > Personal access tokens ([Direct Link](https://app.netlify.com/user/applications#personal-access-tokens))
+   - Select **New access token**
+   - Give it a description (e.g., "MCP Server Token")
+   - Set an expiration date
+   - Select **Generate token**
+   - **Copy the token immediately** and store it securely
+
+2. **Configure the Token:** You need to make this token available to the MCP server as the `NETLIFY_AUTH_TOKEN` environment variable. Add it to the `env` section of the server's configuration in your MCP settings file (see below).
 
 **Note:** Using `netlify login` is **not** suitable for this server as it requires interactive browser authentication.
 
 ## Configuration
 
-Add the following configuration to your MCP settings file (location varies by platform), replacing `"YOUR_NETLIFY_PAT_HERE"` with your actual Personal Access Token:
+Add the following configuration to your MCP settings file, replacing `"YOUR_NETLIFY_PAT_HERE"` with your actual Personal Access Token:
 
 ```json
 {
   "mcpServers": {
     "netlify": {
       "command": "node",
-      "args": ["/path/to/Netlify-MCP-Server/build/index.js"], // Adjust path if needed
+      "args": ["C:\\path\\to\\Netlify-MCP-Server\\build\\index.js"],
       "env": {
         "NETLIFY_AUTH_TOKEN": "YOUR_NETLIFY_PAT_HERE"
       },
@@ -85,12 +162,10 @@ Add the following configuration to your MCP settings file (location varies by pl
 }
 ```
 
-*Replace `/path/to/Netlify-MCP-Server` with the actual path where you cloned/installed the server.*
-
 **Settings file locations:**
-- Claude Desktop (macOS): `~/Library/Application Support/Claude/claude_desktop_config.json`
-- Cline Dev Extension (VS Code): `/home/user/.codeoss-cloudworkstations/data/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (or similar based on OS/setup)
-- *Consult your specific MCP client documentation for other potential locations.*
+- **Claude Desktop (Windows)**: `%APPDATA%\Claude\claude_desktop_config.json`
+- **Claude Desktop (macOS)**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Other MCP clients**: Consult your specific MCP client documentation
 
 ## Available Tools (Netlify CLI v19.1.5 Compatible)
 

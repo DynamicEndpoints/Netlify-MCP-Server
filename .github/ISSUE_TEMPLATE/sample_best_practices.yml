@@ -1,0 +1,320 @@
+name: 📋 Sample Issue - Best Practices Demo
+description: Example issue demonstrating optimal structure for Copilot coding agents
+title: "[SAMPLE] Implement Rate Limiting with Exponential Backoff for Netlify API Calls"
+labels: ["sample", "documentation", "best-practices"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # 📋 Sample Issue - Best Practices for Copilot
+        
+        **This is a demonstration issue showing optimal structure for AI coding assistants.**
+        
+        ⚠️ **Do not implement this feature** - this is for reference only.
+        
+        This sample demonstrates:
+        - Clear, actionable objectives
+        - Specific technical requirements
+        - Detailed acceptance criteria
+        - Comprehensive scope definition
+        - Implementation guidance for AI assistants
+
+  - type: textarea
+    id: sample_objective
+    attributes:
+      label: 🎯 Clear Objective
+      description: This shows how to write a specific, measurable goal
+      value: |
+        **Goal:** Implement intelligent rate limiting for Netlify API calls to prevent hitting API limits and improve reliability.
+        
+        **Success Criteria:**
+        - Automatically detect rate limit responses (HTTP 429)
+        - Implement exponential backoff with jitter (base: 1s, max: 30s)
+        - Track API usage across all tools to prevent limits
+        - Graceful degradation when limits are approached
+        - Zero impact on successful API calls
+        - All existing functionality preserved
+        
+        **Business Value:** Prevents deployment failures due to rate limiting, especially important for automated CI/CD pipelines.
+
+  - type: textarea
+    id: sample_scope
+    attributes:
+      label: 🎯 Scope Definition (Sample)
+      description: Example of clearly defined scope boundaries
+      value: |
+        **✅ In Scope:**
+        - Add rate limiting logic to `executeNetlifyCommand()` function
+        - Implement exponential backoff algorithm with jitter
+        - Create rate limit detection from HTTP response codes
+        - Add configuration options for rate limit parameters
+        - Update all API-calling tools to use rate limiting
+        - Add comprehensive unit and integration tests
+        - Update documentation with rate limiting behavior
+        
+        **❌ Out of Scope:**
+        - Changes to MCP SDK interfaces or tool signatures
+        - Modifications to Netlify CLI itself
+        - Client-side rate limiting (only server-side)
+        - Breaking changes to existing API
+        - UI changes in MCP clients
+        - Rate limiting for non-API operations (file system, etc.)
+        
+        **🔄 Dependencies:**
+        - Must complete after retry mechanism implementation (#123)
+        - Requires stable test environment
+        - Should coordinate with deployment pipeline updates
+
+  - type: textarea
+    id: sample_technical
+    attributes:
+      label: 🔧 Technical Requirements (Sample)
+      description: Example of specific technical constraints
+      value: |
+        **Architecture Requirements:**
+        ```typescript
+        interface RateLimitConfig {
+          maxRequestsPerMinute: number;
+          maxRequestsPerHour: number;
+          backoffBaseMs: number;
+          backoffMaxMs: number;
+          jitterFactor: number;
+        }
+        
+        interface RateLimitState {
+          requestCount: number;
+          windowStart: number;
+          lastRequest: number;
+          backoffUntil?: number;
+        }
+        ```
+        
+        **Performance Requirements:**
+        - Rate limit checking overhead < 1ms per request
+        - Memory usage < 1MB for tracking state
+        - Backoff calculations must be deterministic for testing
+        - Thread-safe for concurrent tool execution
+        
+        **Compatibility:**
+        - Node.js 18+ (async/await, stable timers)
+        - TypeScript strict mode compliance
+        - No new external dependencies for core logic
+        - Compatible with existing error handling patterns
+        
+        **Security:**
+        - Rate limit state should not leak sensitive information
+        - Backoff timing should include jitter to prevent thundering herd
+        - Graceful handling of system clock changes
+
+  - type: textarea
+    id: sample_acceptance
+    attributes:
+      label: ✅ Acceptance Criteria (Sample)
+      description: Example of specific, testable conditions
+      value: |
+        **Functional Requirements:**
+        - [ ] API calls are automatically throttled when approaching rate limits
+        - [ ] HTTP 429 responses trigger exponential backoff (1s, 2s, 4s, 8s, 16s, 30s max)
+        - [ ] Jitter (±25%) prevents synchronized retries across instances
+        - [ ] Rate limit counters reset appropriately (per minute/hour windows)
+        - [ ] Concurrent API calls are properly coordinated
+        - [ ] Rate limiting can be disabled via environment variable `DISABLE_RATE_LIMITING=true`
+        
+        **Error Handling:**
+        - [ ] Non-rate-limit errors bypass rate limiting logic
+        - [ ] Rate limit exceeded errors include helpful retry-after information
+        - [ ] System handles clock adjustments gracefully
+        - [ ] Memory usage remains constant during extended rate limiting
+        
+        **Testing:**
+        - [ ] Unit tests cover all backoff scenarios
+        - [ ] Integration tests simulate real rate limit responses
+        - [ ] Performance tests verify minimal overhead
+        - [ ] Concurrency tests ensure thread safety
+        - [ ] All existing tests continue to pass
+        
+        **Documentation:**
+        - [ ] README.md updated with rate limiting section
+        - [ ] JSDoc comments added to all public functions
+        - [ ] Configuration options documented
+        - [ ] Troubleshooting guide for rate limit issues
+
+  - type: textarea
+    id: sample_implementation
+    attributes:
+      label: 🛠️ Implementation Guidance (Sample)
+      description: Example of detailed implementation direction
+      value: |
+        **File Structure:**
+        ```
+        src/
+          rateLimiter.ts          # Core rate limiting logic
+          index.ts                # Updated to use rate limiter
+          types/rateLimiter.ts    # Type definitions
+        tests/
+          rateLimiter.test.ts     # Unit tests
+          rateLimiter.integration.test.ts  # Integration tests
+        ```
+        
+        **Implementation Steps:**
+        1. **Create rate limiter module** (`src/rateLimiter.ts`)
+           - Implement sliding window rate tracking
+           - Add exponential backoff with jitter calculation
+           - Create rate limit detection from HTTP responses
+        
+        2. **Integrate with executeNetlifyCommand** (`src/index.ts`)
+           - Wrap API calls with rate limiting
+           - Handle rate limit exceptions
+           - Add debug logging for rate limit events
+        
+        3. **Add configuration** (`src/config.ts`)
+           - Default rate limit values
+           - Environment variable overrides
+           - Validation for configuration values
+        
+        4. **Comprehensive testing**
+           - Mock timer functions for deterministic tests
+           - Simulate various rate limit scenarios
+           - Test concurrent execution patterns
+        
+        **Code Patterns to Follow:**
+        ```typescript
+        // Use dependency injection for testability
+        class NetlifyApiClient {
+          constructor(private rateLimiter: RateLimiter) {}
+        }
+        
+        // Implement circuit breaker pattern
+        async function executeWithRateLimit<T>(
+          operation: () => Promise<T>,
+          context: string
+        ): Promise<T> {
+          await this.rateLimiter.checkAndWait(context);
+          try {
+            const result = await operation();
+            this.rateLimiter.recordSuccess(context);
+            return result;
+          } catch (error) {
+            if (isRateLimitError(error)) {
+              this.rateLimiter.recordRateLimit(context, error);
+              throw new RateLimitExceededError(error);
+            }
+            throw error;
+          }
+        }
+        ```
+
+  - type: textarea
+    id: sample_validation
+    attributes:
+      label: 🧪 Validation Strategy (Sample)
+      description: Example of comprehensive validation approach
+      value: |
+        **Automated Testing:**
+        ```bash
+        # Unit tests with 100% coverage
+        npm test -- --coverage --testPathPattern=rateLimiter
+        
+        # Integration tests with real API simulation
+        npm run test:integration -- --testNamePattern="rate.limit"
+        
+        # Performance benchmarks
+        npm run benchmark -- --scenario=rate-limiting
+        
+        # Type checking
+        npm run type-check
+        ```
+        
+        **Manual Testing Scenarios:**
+        1. **Normal Operation:** Deploy site with rate limiting enabled
+        2. **Rate Limit Hit:** Trigger rate limits with rapid API calls
+        3. **Recovery:** Verify system recovers after rate limit period
+        4. **Concurrent Users:** Test multiple simultaneous operations
+        5. **Configuration:** Test with different rate limit settings
+        
+        **Production Validation:**
+        1. **Gradual Rollout:** Enable for 10% of operations initially
+        2. **Monitoring:** Track API success rates and response times
+        3. **Alerting:** Set up alerts for excessive rate limiting
+        4. **Rollback Plan:** Ability to disable rate limiting quickly
+        
+        **Success Metrics:**
+        - API error rate due to rate limiting < 0.1%
+        - Average request delay < 50ms for non-limited requests
+        - 99th percentile response time < 2s including backoff
+        - Zero memory leaks during extended operation
+
+  - type: textarea
+    id: sample_context
+    attributes:
+      label: 📚 Context and References (Sample)
+      description: Example of comprehensive context provision
+      value: |
+        **Problem Background:**
+        - Users report intermittent deployment failures during peak usage
+        - Netlify API rate limits: 500 requests/minute, 7000 requests/hour
+        - Current implementation has no rate limit awareness
+        - CI/CD pipelines fail unpredictably due to rate limiting
+        
+        **Related Issues:**
+        - #234 - "Deployment fails with 429 Too Many Requests"
+        - #567 - "Need better API error handling"
+        - #890 - "Implement retry mechanism" (prerequisite)
+        
+        **Research and References:**
+        - [Netlify API Rate Limits](https://docs.netlify.com/api/get-started/#rate-limiting)
+        - [Exponential Backoff Best Practices](https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/)
+        - [Circuit Breaker Pattern](https://martinfowler.com/bliki/CircuitBreaker.html)
+        
+        **Technical Analysis:**
+        - Current `executeNetlifyCommand()` function: lines 25-45 in src/index.ts
+        - Error handling patterns: implemented in retry mechanism PR #891
+        - Similar implementations: AWS SDK, Google Cloud SDK rate limiting
+        
+        **Impact Assessment:**
+        - **High Impact:** Improves reliability for automated deployments
+        - **Medium Risk:** Changes core execution path
+        - **Low Complexity:** Well-established patterns available
+
+  - type: checkboxes
+    id: sample_ai_requirements
+    attributes:
+      label: 🤖 AI/Copilot Requirements (Sample)
+      description: Example of AI-specific requirements
+      options:
+        - label: "Code includes comprehensive JSDoc with @param and @returns"
+        - label: "Functions are pure/deterministic where possible for easier testing"
+        - label: "Clear error messages with actionable remediation steps"
+        - label: "Consistent naming conventions throughout the codebase"
+        - label: "Type definitions exported for external use and AI analysis"
+        - label: "Configuration schema with validation and clear defaults"
+        - label: "Debug logging with structured data for AI analysis"
+        - label: "Performance metrics exposed for monitoring and optimization"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+        
+        ## 📖 Using This Sample
+        
+        **For Human Developers:**
+        - Use this as a template for writing detailed, actionable issues
+        - Notice how each section provides specific, testable requirements
+        - Observe the balance between flexibility and constraint
+        
+        **For AI Coding Assistants:**
+        - This structure provides clear implementation guidance
+        - Technical requirements are specific enough to guide development
+        - Acceptance criteria are testable and measurable
+        - Implementation hints reduce ambiguity
+        
+        **Key Principles Demonstrated:**
+        1. **Clarity:** Every requirement is specific and unambiguous
+        2. **Completeness:** All aspects of implementation are covered
+        3. **Testability:** Success can be objectively measured
+        4. **Context:** Sufficient background for informed decisions
+        5. **Scope:** Clear boundaries prevent scope creep
+        
+        💡 **Tip:** Copy sections from this sample when creating real issues to ensure you include all necessary information for successful AI-assisted development.
