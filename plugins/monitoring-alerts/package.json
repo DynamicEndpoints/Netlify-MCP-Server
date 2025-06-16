@@ -1,0 +1,20 @@
+{
+  "id": "monitoring-alerts",
+  "name": "Monitoring & Alerts Plugin",
+  "version": "1.0.0",
+  "description": "Advanced monitoring and alerting capabilities",
+  "main": "monitoring-plugin.js",
+  "capabilities": {
+    "tools": [
+      "send_alert",
+      "check_health"
+    ],
+    "hooks": [
+      "deployment",
+      "error"
+    ]
+  },
+  "permissions": {
+    "network": true
+  }
+}

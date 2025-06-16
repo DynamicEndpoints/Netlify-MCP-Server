@@ -46,7 +46,7 @@ const performanceOptimizer = new PerformanceOptimizer({
   concurrency: {
     maxConcurrentOperations: 15,
     queueMaxSize: 1000,
-    workerPoolSize: 4,
+    workerPoolSize: 0, // Disable worker pool for now
   },
   optimization: {
     enableRequestBatching: true,

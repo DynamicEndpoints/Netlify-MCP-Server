@@ -1,0 +1,144 @@
+{
+  "id": "site-health-check",
+  "name": "Site Health Check",
+  "description": "Comprehensive site health monitoring",
+  "version": "1.0.0",
+  "tags": [
+    "health",
+    "monitoring",
+    "diagnostics"
+  ],
+  "category": "monitoring",
+  "arguments": [
+    {
+      "name": "siteId",
+      "type": "string",
+      "description": "Site ID to check",
+      "required": true
+    },
+    {
+      "name": "checkFunctions",
+      "type": "boolean",
+      "description": "Check functions",
+      "required": false,
+      "defaultValue": true
+    },
+    {
+      "name": "checkForms",
+      "type": "boolean",
+      "description": "Check forms",
+      "required": false,
+      "defaultValue": true
+    }
+  ],
+  "variables": {},
+  "steps": [
+    {
+      "id": "get-site-info",
+      "name": "Get Site Information",
+      "description": "Retrieve basic site information",
+      "type": "tool",
+      "tool": "netlify_get_site_info",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "onSuccess": "check-recent-deploys",
+      "retryCount": 0
+    },
+    {
+      "id": "check-recent-deploys",
+      "name": "Check Recent Deploys",
+      "description": "Check the status of recent deployments",
+      "type": "tool",
+      "tool": "netlify_list_deploys",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "onSuccess": "parallel-checks",
+      "retryCount": 0
+    },
+    {
+      "id": "parallel-checks",
+      "name": "Run Parallel Checks",
+      "description": "Run multiple checks in parallel",
+      "type": "parallel",
+      "retryCount": 0,
+      "parallel": [
+        "check-functions",
+        "check-forms",
+        "check-env-vars"
+      ]
+    },
+    {
+      "id": "check-functions",
+      "name": "Check Functions",
+      "description": "Check Netlify Functions",
+      "type": "condition",
+      "condition": "arguments.checkFunctions",
+      "onSuccess": "list-functions",
+      "onFailure": "generate-report",
+      "retryCount": 0
+    },
+    {
+      "id": "list-functions",
+      "name": "List Functions",
+      "description": "Get function list and status",
+      "type": "tool",
+      "tool": "netlify_list_functions",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "retryCount": 0
+    },
+    {
+      "id": "check-forms",
+      "name": "Check Forms",
+      "description": "Check form submissions",
+      "type": "condition",
+      "condition": "arguments.checkForms",
+      "onSuccess": "get-form-submissions",
+      "onFailure": "generate-report",
+      "retryCount": 0
+    },
+    {
+      "id": "get-form-submissions",
+      "name": "Get Form Submissions",
+      "description": "Retrieve recent form submissions",
+      "type": "tool",
+      "tool": "netlify_get_form_submissions",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "retryCount": 0
+    },
+    {
+      "id": "check-env-vars",
+      "name": "Check Environment Variables",
+      "description": "Validate environment configuration",
+      "type": "tool",
+      "tool": "netlify_get_env_var",
+      "parameters": {
+        "siteId": "${siteId}",
+        "key": "NODE_ENV"
+      },
+      "retryCount": 0
+    },
+    {
+      "id": "generate-report",
+      "name": "Generate Health Report",
+      "description": "Compile health check report",
+      "type": "tool",
+      "tool": "generate_health_report",
+      "parameters": {
+        "results": "${allResults}"
+      },
+      "retryCount": 0
+    }
+  ],
+  "errorHandling": {
+    "strategy": "stop",
+    "maxRetries": 3,
+    "retryDelay": 1000
+  },
+  "metadata": {}
+}

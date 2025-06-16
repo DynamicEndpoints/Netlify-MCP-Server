@@ -1,0 +1,163 @@
+{
+  "id": "netlify-ci-cd-pipeline",
+  "name": "Complete CI/CD Pipeline",
+  "description": "Full CI/CD pipeline with testing, building, and deployment",
+  "version": "1.0.0",
+  "tags": [
+    "ci-cd",
+    "testing",
+    "deployment"
+  ],
+  "category": "deployment",
+  "arguments": [
+    {
+      "name": "repositoryPath",
+      "type": "string",
+      "description": "Path to repository",
+      "required": true
+    },
+    {
+      "name": "branch",
+      "type": "string",
+      "description": "Branch to deploy",
+      "required": false,
+      "defaultValue": "main"
+    },
+    {
+      "name": "environment",
+      "type": "string",
+      "description": "Target environment",
+      "required": false,
+      "defaultValue": "production"
+    },
+    {
+      "name": "runTests",
+      "type": "boolean",
+      "description": "Run tests before deployment",
+      "required": false,
+      "defaultValue": true
+    }
+  ],
+  "variables": {},
+  "steps": [
+    {
+      "id": "validate-repo",
+      "name": "Validate Repository",
+      "description": "Check if repository exists and is accessible",
+      "type": "condition",
+      "condition": "fs.existsSync(variables.repositoryPath)",
+      "onSuccess": "install-dependencies",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "install-dependencies",
+      "name": "Install Dependencies",
+      "description": "Install project dependencies",
+      "type": "tool",
+      "tool": "shell_execute",
+      "parameters": {
+        "command": "npm ci",
+        "cwd": "${repositoryPath}"
+      },
+      "onSuccess": "run-tests",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "run-tests",
+      "name": "Run Tests",
+      "description": "Execute test suite",
+      "type": "condition",
+      "condition": "arguments.runTests",
+      "onSuccess": "execute-tests",
+      "onFailure": "build-project",
+      "retryCount": 0
+    },
+    {
+      "id": "execute-tests",
+      "name": "Execute Tests",
+      "description": "Run the test command",
+      "type": "tool",
+      "tool": "shell_execute",
+      "parameters": {
+        "command": "npm test",
+        "cwd": "${repositoryPath}"
+      },
+      "onSuccess": "build-project",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "build-project",
+      "name": "Build Project",
+      "description": "Build the project for deployment",
+      "type": "tool",
+      "tool": "netlify_build_site",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "onSuccess": "deploy-site",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "deploy-site",
+      "name": "Deploy to Netlify",
+      "description": "Deploy the built site",
+      "type": "tool",
+      "tool": "netlify_deploy_site",
+      "parameters": {
+        "path": "${repositoryPath}/dist",
+        "prod": "${environment === 'production'}",
+        "message": "Automated deployment from ${branch}"
+      },
+      "onSuccess": "verify-deployment",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "verify-deployment",
+      "name": "Verify Deployment",
+      "description": "Verify the deployment was successful",
+      "type": "tool",
+      "tool": "netlify_get_site_info",
+      "parameters": {
+        "siteId": "${siteId}"
+      },
+      "onSuccess": "notify-success",
+      "onFailure": "report-error",
+      "retryCount": 0
+    },
+    {
+      "id": "notify-success",
+      "name": "Notify Success",
+      "description": "Send success notification",
+      "type": "tool",
+      "tool": "send_notification",
+      "parameters": {
+        "message": "Deployment successful for ${siteId}",
+        "type": "success"
+      },
+      "retryCount": 0
+    },
+    {
+      "id": "report-error",
+      "name": "Report Error",
+      "description": "Report deployment error",
+      "type": "tool",
+      "tool": "send_notification",
+      "parameters": {
+        "message": "Deployment failed: ${lastError}",
+        "type": "error"
+      },
+      "retryCount": 0
+    }
+  ],
+  "errorHandling": {
+    "strategy": "stop",
+    "maxRetries": 3,
+    "retryDelay": 1000
+  },
+  "metadata": {}
+}

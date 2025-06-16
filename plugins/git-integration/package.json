@@ -1,0 +1,19 @@
+{
+  "id": "git-integration",
+  "name": "Git Integration Plugin",
+  "version": "1.0.0",
+  "description": "Git repository management tools",
+  "main": "git-plugin.js",
+  "capabilities": {
+    "tools": [
+      "git_status",
+      "git_commit",
+      "git_push",
+      "git_pull"
+    ]
+  },
+  "permissions": {
+    "shell": true,
+    "fileSystem": true
+  }
+}
